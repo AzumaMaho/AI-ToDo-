@@ -13,35 +13,26 @@
   <div class="bg-glow bg-glow--top"></div>
   <div class="bg-glow bg-glow--bottom"></div>
 
-  <!-- 画面の全体設定 -->
   <div class="container">
 
-    <!-- ヘッダー：タイトルと進捗の統計を表示 -->
+    <!-- ヘッダー：タイトルと統計を表示 -->
     <header class="header">
       <p class="label">// AI Passport Study Tracker</p>
       <h1 class="title">AIパスポート <span class="title__accent">学習管理</span></h1>
 
-      <!-- 統計エリア：節数はJavaScriptで動的に更新される -->
+      <!-- 統計エリア：数値はJavaScriptで動的に更新される -->
       <div class="stats">
-        <span class="stats__item">全体節数 <b id="stat-total" class="stats__value">0</b></span>
-        <span class="stats__item">完了節数 <b id="stat-done" class="stats__value stats__value--done">0</b></span>
-        <span class="stats__item">残り節数 <b id="stat-remaining" class="stats__value stats__value--remaining">0</b></span>
+        <span class="stats__item">全節数 <b id="stat-total" class="stats__value">0</b> 個</span>
+        <span class="stats__item">完了 <b id="stat-done" class="stats__value stats__value--done">0</b> 個</span>
+        <span class="stats__item">残り <b id="stat-remaining" class="stats__value stats__value--remaining">0</b> 個</span>
       </div>
     </header>
 
-    <!-- 全体進捗度 -->
-    <div class="progress-overview">
-      <div class="progress-bar-label">
-        <span>全体の進捗度</span>
-        <span id="overall-progress-label">0%</span>
-      </div>
-      <div class="progress-bar-track">
-        <div class="progress-bar-fill" id="overall-progress-fill"></div>
-      </div>
-    </div>
-
-    <!-- 章と節の一覧 -->
-    <ul id="chapter-list" class="chapter-list" aria-label="学習章一覧"></ul>
+    <!--
+      全体進捗バーと章リストはJavaScriptで動的に生成される。
+      script.js の DOMContentLoaded 内でここに挿入される。
+    -->
+    <div id="chapter-list"></div>
 
   </div>
 
