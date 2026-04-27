@@ -13,7 +13,6 @@ const INITIAL_TASKS = [
 
 /* ─── 定数 ──────────────────────────────────────────────── */
 // ローカルストレージに保存するときのキー名
-// ▼ 変更点: キー名をアプリ内容に合わせて変更
 const STORAGE_KEY = 'ai-passport-tasks';
 
 /* ─── 状態（State） ─────────────────────────────────────── */
@@ -36,11 +35,6 @@ const statRemaining = document.getElementById('stat-remaining'); // 「残り」
 /**
  * ローカルストレージからチェック状態（完了/未完了）を読み込む
  *
- * ▼ 変更点:
- *   以前はタスク全体をローカルストレージから復元していましたが、
- *   タスク自体はINITIAL_TASKSで固定になったため、
- *   保存するのは「各タスクのチェック状態（完了かどうか）」だけに変更しました。
- *
  * 仕組み:
  *   { "task-01": true, "task-03": true } のような形式で保存し、
  *   INITIAL_TASKSのタスクにチェック状態を反映させます。
@@ -49,9 +43,10 @@ function loadTasks() {
   try {
     // ローカルストレージから保存済みのチェック状態を取得する
     const raw = localStorage.getItem(STORAGE_KEY);
-    const savedStatus = raw ? JSON.parse(raw) : {}; // 保存がなければ空のオブジェクト
+    // ストレージの情報をJavaScriptの形式にしてsavedStatusに入れる
+    const savedStatus = raw ? JSON.parse(raw) : {}; 
 
-    // INITIAL_TASKSをベースに、保存済みのチェック状態を反映してtasksを作成する
+    // INITIAL_TASKS(初期タスク配列)をもとに、状態（done）付きの新しい配列を作る
     tasks = INITIAL_TASKS.map(task => ({
       id:   task.id,
       text: task.text,
@@ -68,18 +63,16 @@ function loadTasks() {
 
 /**
  * 各タスクのチェック状態をローカルストレージに保存する
- *
- * ▼ 変更点:
- *   以前はタスク全体（テキスト・ID・日時など）を保存していましたが、
- *   タスク内容は固定になったため、チェック状態だけを保存する形に変更しました。
  */
 function saveTasks() {
   try {
     // { "task-01": true, "task-03": false, ... } の形式で保存する
-    const statusMap = {};
+    const statusMap = {}; // 保存用の箱を作る
+    // forEachで一つづつタスクIDとチェック状態をstatusMapに入れる
     tasks.forEach(task => {
       statusMap[task.id] = task.done;
     });
+    // statusMapをJSON文字列にしてローカルストレージに保存する
     localStorage.setItem(STORAGE_KEY, JSON.stringify(statusMap));
   } catch (e) {
     console.error('チェック状態の保存に失敗しました:', e);
@@ -101,14 +94,14 @@ function saveTasks() {
 function toggleTask(id, done, li) {
   // tasksの配列から対象のタスクを探して状態を更新する
   const task = tasks.find(t => t.id === id);
-  if (!task) return; // 見つからなければ何もしない
+  if (!task) return; // 更新が見つからなければ何もしない
 
   task.done = done; // 状態を更新
 
   // ローカルストレージに保存する
   saveTasks();
 
-  // 見た目を更新（is-doneクラスのON/OFFで取り消し線やグレー表示が切り替わる）
+  // 見た目を更新（is-doneクラスのON/OFFで表示が切り替わる）
   li.classList.toggle('is-done', done);
 
   // 統計と進捗バーを更新する
@@ -122,12 +115,8 @@ function toggleTask(id, done, li) {
    ============================================================ */
 
 /**
- * タスク1件分のHTML要素（li）を作成して返す
- *
- * ▼ 変更点:
- *   以前は「削除ボタン」も生成していましたが、削除機能が不要になったため削除しました。
- *   チェックボックスとテキスト、番号バッジのみを生成します。
- *
+ * 一個のタスクをHTMLに変換してli要素を作る
+ 
  * @param {Object} task   - タスクオブジェクト { id, text, done }
  * @param {number} index  - 表示順の番号（0始まり）
  * @returns {HTMLElement} - 作成したli要素
@@ -178,7 +167,7 @@ function createTaskElement(task, index) {
 function renderAllTasks() {
   // 一覧をいったん空にしてから再描画する
   taskList.innerHTML = '';
-
+// tasks配列の内容を一つずつcreateTaskElement()でli要素に変換して追加する
   tasks.forEach((task, index) => {
     const taskEl = createTaskElement(task, index);
     taskList.appendChild(taskEl);
@@ -190,14 +179,13 @@ function renderAllTasks() {
 }
 
 /**
- * ▼ 変更点: 進捗バーを更新する関数を追加
  * 完了タスク数に応じてプログレスバーの幅を変化させる
  */
 function updateProgressBar() {
-  const total     = tasks.length;
-  const doneCount = tasks.filter(t => t.done).length;
+  const total     = tasks.length; // タスクの総数
+  const doneCount = tasks.filter(t => t.done).length; // done === true のタスクだけ取り出す
 
-  // 進捗バーの要素を取得する
+  // 進捗バーのHTML要素を取得する
   const fill  = document.getElementById('progress-fill');
   const label = document.getElementById('progress-label');
 
@@ -215,10 +203,11 @@ function updateProgressBar() {
  * ヘッダーの統計（合計・完了・残り）を更新する
  */
 function updateStats() {
-  const total     = tasks.length;
-  const doneCount = tasks.filter(t => t.done).length;
-  const remaining = total - doneCount;
+  const total     = tasks.length; // タスクの総数
+  const doneCount = tasks.filter(t => t.done).length; // done === true のタスクだけ取り出す
+  const remaining = total - doneCount; // 残りは総数から完了数を引いたもの
 
+  // HTMLに数値を反映する
   statTotal.textContent     = total;
   statDone.textContent      = doneCount;
   statRemaining.textContent = remaining;
@@ -226,22 +215,15 @@ function updateStats() {
 
 
 /* ============================================================
-   ▼ 変更点: イベントリスナーの整理
-   以前は addBtn（追加ボタン）と taskInput（テキスト入力欄）に
-   イベントリスナーを登録していましたが、両方とも削除しました。
-   チェックボックスのイベントは createTaskElement() 内で登録しています。
-   ============================================================ */
-
-/* ============================================================
    初期化
-   ページが完全に読み込まれてから実行する
+   HTMLの読み込みが終わった瞬間に実行する
    ============================================================ */
 document.addEventListener('DOMContentLoaded', () => {
   // ① ローカルストレージからチェック状態を読み込む
   loadTasks();
 
   // ② 進捗バーをHTMLに動的に挿入する
-  //    （HTMLファイルに直接書かず、JavaScriptで生成することで管理しやすくする）
+  //    （HTMLをJavaScriptで作って、画面に追加してる）
   const progressHTML = `
     <div class="progress-bar-wrapper" id="progress-wrapper">
       <div class="progress-bar-label">
