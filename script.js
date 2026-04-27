@@ -39,6 +39,9 @@ const STORAGE_KEY = 'ai-passport-tasks';
       ローカルストレージには保存しない。
       ページ再読み込み時に節の状態から自動計算して復元する。
    ============================================================ */
+   function showError(msg) {
+    alert(msg);
+   }
 
 /**
  * 節のチェック状態をローカルストレージから読み込む
@@ -49,7 +52,7 @@ function loadCheckStatus() {
     const raw = localStorage.getItem(STORAGE_KEY);
     return raw ? JSON.parse(raw) : {};
   } catch (e) {
-    console.error('チェック状態の読み込みに失敗しました:', e);
+    showError('チェック状態の読み込みに失敗しました:', e);
     return {};
   }
 }
@@ -62,7 +65,7 @@ function saveCheckStatus(status) {
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(status));
   } catch (e) {
-    console.error('チェック状態の保存に失敗しました:', e);
+    showError('チェック状態の保存に失敗しました:', e);
   }
 }
 
@@ -503,7 +506,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   try {
     chapters = await loadChapters();
   } catch (e) {
-    console.error(e);
+    showError('chapters.json の読み込みに失敗しました。');
     /* 読み込み失敗時はエラーメッセージをページに表示して処理を止める */
     const chapterListEl = document.getElementById('chapter-list');
     chapterListEl.innerHTML =
