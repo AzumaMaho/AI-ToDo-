@@ -23,7 +23,7 @@
    ============================================================ */
 
 /* ─── 定数 ──────────────────────────────────────────────── */
-/** chapters.json の読み込みパス */
+/** chapters.jsonというファイルを使う */
 const CHAPTERS_JSON_PATH = 'chapters.json';
 
 /** ローカルストレージへの保存キー */
@@ -47,10 +47,11 @@ const STORAGE_KEY = 'ai-passport-tasks';
  * 節のチェック状態をローカルストレージから読み込む
  * @returns {Object} チェック状態のオブジェクト
  */
-function loadCheckStatus() {
+function loadCheckStatus() { // 読み込み
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
-    return raw ? JSON.parse(raw) : {};
+    // 文字列をオブジェクトに変換して返す
+    return raw ? JSON.parse(raw) : {}; // データがないときは空オブジェクトを返す
   } catch (e) {
     showError('チェック状態の読み込みに失敗しました:', e);
     return {};
@@ -61,8 +62,9 @@ function loadCheckStatus() {
  * 節のチェック状態をローカルストレージに保存する
  * @param {Object} status - 節IDをキー、チェック済みかどうかを値とするオブジェクト
  */
-function saveCheckStatus(status) {
+function saveCheckStatus(status) { // 保存
   try {
+    // オブジェクトを文字列に変換して保存する
     localStorage.setItem(STORAGE_KEY, JSON.stringify(status));
   } catch (e) {
     showError('チェック状態の保存に失敗しました:', e);
