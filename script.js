@@ -1,310 +1,545 @@
 ﻿/* ============================================================
-   ▼ 変更点: 章と節の構造に変更
-   章・節の情報を外部JSON（chapters.json）で管理し、
-   チェック状態はローカルストレージで保持します。
+   script.js — AIパスポート 学習管理 JavaScript
    ============================================================ */
-const CHAPTERS_DATA_URL = './chapters.json';
+
+'use strict';
+
+/* ============================================================
+   学習データの読み込み
+   章と節の情報は chapters.json で管理しています。
+   内容を変更したい場合は chapters.json を編集してください。
+
+   chapters.json のデータ構造:
+   [
+     {
+       "id"      : "ch1",            // 章の識別子（ローカルストレージのキーに使用）
+       "title"   : "第1章 ...",      // 章のタイトル
+       "sections": [                 // 節の配列
+         { "id": "ch1-s1", "text": "..." }
+       ]
+     },
+     ...
+   ]
+   ============================================================ */
 
 /* ─── 定数 ──────────────────────────────────────────────── */
-const STORAGE_KEY = 'ai-passport-sections';
+/** chapters.json の読み込みパス */
+const CHAPTERS_JSON_PATH = 'chapters.json';
 
-/* ─── 状態（State） ─────────────────────────────────────────── */
-let chapters = [];
+/** ローカルストレージへの保存キー */
+const STORAGE_KEY = 'ai-passport-tasks';
 
-/* ─── DOM 参照 ──────────────────────────────────────────── */
-const chapterList      = document.getElementById('chapter-list');
-const statTotal        = document.getElementById('stat-total');
-const statDone         = document.getElementById('stat-done');
-const statRemaining    = document.getElementById('stat-remaining');
+/* ============================================================
+   ローカルストレージ（チェック状態の保存・読み込み）
 
-/* ─── 最小エラー表示（追加） ─────────────────────────────── */
-function showError(msg) {
-  alert(msg);
+   保存形式（節のチェック状態のみを保存する）:
+     { "ch1-s1": true, "ch1-s2": false, "ch2-s1": true, ... }
+
+   ※ 章のチェックボックスは「節が全部ONかどうか」を表示するだけなので
+      ローカルストレージには保存しない。
+      ページ再読み込み時に節の状態から自動計算して復元する。
+   ============================================================ */
+
+/**
+ * 節のチェック状態をローカルストレージから読み込む
+ * @returns {Object} チェック状態のオブジェクト
+ */
+function loadCheckStatus() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    return raw ? JSON.parse(raw) : {};
+  } catch (e) {
+    console.error('チェック状態の読み込みに失敗しました:', e);
+    return {};
+  }
+}
+
+/**
+ * 節のチェック状態をローカルストレージに保存する
+ * @param {Object} status - 節IDをキー、チェック済みかどうかを値とするオブジェクト
+ */
+function saveCheckStatus(status) {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(status));
+  } catch (e) {
+    console.error('チェック状態の保存に失敗しました:', e);
+  }
 }
 
 /* ============================================================
-   ローカルストレージ（データ保存・読み込み）
+   chapters.json の読み込み
+
+   fetch API を使って JSON ファイルを非同期で取得する。
+   ローカルファイルで動作させる場合は HTTPサーバー経由で開くこと
+   （例: VS Code の Live Server, python -m http.server など）。
    ============================================================ */
 
-function loadTasks(chapterData) {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    const savedStatus = raw ? JSON.parse(raw) : {};
-
-    chapters = chapterData.map(chapter => ({
-      ...chapter,
-      sections: chapter.sections.map(section => ({
-        ...section,
-        done: savedStatus[section.id] === true
-      }))
-    }));
-  } catch (e) {
-    showError('チェック状態の読み込みに失敗しました:', e);
-    chapters = chapterData.map(chapter => ({
-      ...chapter,
-      sections: chapter.sections.map(section => ({ ...section, done: false }))
-    }));
+/**
+ * chapters.json を fetch で読み込み、章データの配列を返す
+ * @returns {Promise<Array>} 章データの配列
+ */
+async function loadChapters() {
+  const response = await fetch(CHAPTERS_JSON_PATH);
+  if (!response.ok) {
+    throw new Error(`chapters.json の読み込みに失敗しました: ${response.status} ${response.statusText}`);
   }
+  const chapters = await response.json();
+  return chapters;
 }
 
-function saveTasks() {
-  try {
-    const statusMap = {};
-    chapters.forEach(chapter => {
-      chapter.sections.forEach(section => {
-        statusMap[section.id] = section.done;
-      });
+/* ============================================================
+   進捗計算
+   ※ 進捗率は「節のチェック数」のみで計算する。
+      章のチェックボックスは進捗計算に含めない。
+   ============================================================ */
+
+/**
+ * 1章分の進捗率（0〜100%）を計算する
+ *
+ * 計算式:
+ *   チェック済みの節数 ÷ その章の総節数 × 100
+ *
+ * 例: 節が4つあり2つチェック済み → 2 ÷ 4 × 100 = 50%
+ *
+ * @param {Object} chapter - 章データ
+ * @param {Object} status  - 節のチェック状態オブジェクト
+ * @returns {number} 0〜100 の進捗率（整数）
+ */
+function calcChapterProgress(chapter, status) {
+  const totalSections   = chapter.sections.length;   /* 節の合計数 */
+  const checkedSections = chapter.sections.filter(
+    sec => status[sec.id]                             /* チェック済みの節だけ抽出 */
+  ).length;
+
+  /* 節が0のとき（定義ミス防止）は0%を返す */
+  if (totalSections === 0) return 0;
+
+  return Math.floor((checkedSections / totalSections) * 100);
+}
+
+/**
+ * 全体の進捗率（0〜100%）を計算する
+ *
+ * 計算式:
+ *   全節のうちチェック済みの節数 ÷ 全節数 × 100
+ *
+ * @param {Array}  chapters - 章データの配列（JSONから読み込んだもの）
+ * @param {Object} status   - 節のチェック状態オブジェクト
+ * @returns {number} 0〜100 の進捗率（整数）
+ */
+function calcTotalProgress(chapters, status) {
+  /* 全章の節数・チェック済み節数を合計する */
+  let totalSections   = 0;
+  let checkedSections = 0;
+
+  chapters.forEach(chapter => {
+    totalSections   += chapter.sections.length;
+    checkedSections += chapter.sections.filter(sec => status[sec.id]).length;
+  });
+
+  if (totalSections === 0) return 0;
+
+  return Math.floor((checkedSections / totalSections) * 100);
+}
+
+/**
+ * ある章の配下の節がすべてチェック済みかどうかを返す
+ * 章チェックボックスのON/OFF状態の判定に使う
+ *
+ * @param {Object} chapter - 章データ
+ * @param {Object} status  - 節のチェック状態オブジェクト
+ * @returns {boolean}
+ */
+function isAllSectionsDone(chapter, status) {
+  /* 節が1つもない場合は false とする */
+  if (chapter.sections.length === 0) return false;
+  /* すべての節がチェック済みなら true */
+  return chapter.sections.every(sec => status[sec.id]);
+}
+
+/* ============================================================
+   画面の更新（統計・進捗バー・章ミニバー・章チェックボックス）
+   ============================================================ */
+
+/**
+ * ヘッダーの統計（全節数・完了・残り）を更新する
+ * ※ 章のチェックボックスは統計に含めない（節の数のみカウントする）
+ *
+ * @param {Array}  chapters - 章データの配列
+ * @param {Object} status   - 節のチェック状態オブジェクト
+ */
+function updateStats(chapters, status) {
+  let total = 0;
+  let done  = 0;
+
+  chapters.forEach(chapter => {
+    chapter.sections.forEach(sec => {
+      total++;
+      if (status[sec.id]) done++;
     });
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(statusMap));
-  } catch (e) {
-    showError('チェック状態の保存に失敗しました:', e);
-  }
-}
-
-function getAllSections() {
-  return chapters.flatMap(chapter => chapter.sections);
-}
-
-function getChapterDoneState(chapter) {
-  return chapter.sections.length > 0 && chapter.sections.every(section => section.done);
-}
-
-function getChapterProgress(chapter) {
-  const total = chapter.sections.length;
-  const doneCount = chapter.sections.filter(section => section.done).length;
-  return total > 0 ? Math.round((doneCount / total) * 100) : 0;
-}
-
-function getOverallProgress() {
-  const allSections = getAllSections();
-  const total = allSections.length;
-  const doneCount = allSections.filter(section => section.done).length;
-  return total > 0 ? Math.round((doneCount / total) * 100) : 0;
-}
-
-function toggleSection(sectionId, done, sectionItem) {
-  const chapter = chapters.find(ch => ch.sections.some(section => section.id === sectionId));
-  if (!chapter) return;
-
-  const section = chapter.sections.find(section => section.id === sectionId);
-  if (!section) return;
-
-  section.done = done;
-  saveTasks();
-
-  sectionItem.classList.toggle('is-done', done);
-  updateChapterCheckbox(chapter);
-  updateStats();
-  updateProgressBars();
-}
-
-function toggleChapter(chapterId, done) {
-  const chapter = chapters.find(ch => ch.id === chapterId);
-  if (!chapter) return;
-
-  chapter.sections.forEach(section => {
-    section.done = done;
   });
 
-  saveTasks();
-  updateChapterSectionUI(chapter, done);
-  updateStats();
-  updateProgressBars();
+  document.getElementById('stat-total').textContent     = total;
+  document.getElementById('stat-done').textContent      = done;
+  document.getElementById('stat-remaining').textContent = total - done;
 }
 
-function updateChapterCheckbox(chapter) {
-  const chapterCheckbox = document.getElementById(`chapter-checkbox-${chapter.id}`);
-  if (!chapterCheckbox) return;
-  chapterCheckbox.checked = getChapterDoneState(chapter);
+/**
+ * 全体の進捗バーを更新する
+ * @param {Array}  chapters - 章データの配列
+ * @param {Object} status   - 節のチェック状態オブジェクト
+ */
+function updateProgressBar(chapters, status) {
+  const pct   = calcTotalProgress(chapters, status);
+  const fill  = document.getElementById('progress-fill');
+  const label = document.getElementById('progress-label');
+  if (fill)  fill.style.width  = pct + '%';
+  if (label) label.textContent = pct + '%';
 }
 
-function updateChapterSectionUI(chapter, done) {
-  const sectionItems = chapterList.querySelectorAll(`li[data-chapter="${chapter.id}"] .section-item`);
-  sectionItems.forEach(item => {
-    const checkbox = item.querySelector('.section-checkbox');
-    if (!checkbox) return;
-    checkbox.checked = done;
-    item.classList.toggle('is-done', done);
+/**
+ * 章ごとのミニ進捗バーを更新する
+ * @param {Object} chapter - 章データ
+ * @param {Object} status  - 節のチェック状態オブジェクト
+ */
+function updateChapterProgressBar(chapter, status) {
+  const pct   = calcChapterProgress(chapter, status);
+  const fill  = document.getElementById('chapter-progress-fill-' + chapter.id);
+  const label = document.getElementById('chapter-progress-pct-'  + chapter.id);
+  if (fill)  fill.style.width  = pct + '%';
+  if (label) label.textContent = pct + '%';
+}
+
+/**
+ * すべての進捗・統計・章チェックボックスをまとめて更新する
+ * チェックボックスが変化するたびにこの関数を呼ぶ
+ *
+ * @param {Array}  chapters        - 章データの配列
+ * @param {Object} status          - 節のチェック状態オブジェクト
+ * @param {Map}    chapterElementMap - 章IDとDOM要素の対応マップ
+ */
+function updateAllDisplay(chapters, status, chapterElementMap) {
+  /* 統計（個数）を更新 */
+  updateStats(chapters, status);
+
+  /* 全体進捗バーを更新 */
+  updateProgressBar(chapters, status);
+
+  /* 各章のミニ進捗バー・章チェックボックス・is-done クラスを更新 */
+  chapters.forEach(chapter => {
+    updateChapterProgressBar(chapter, status);
+
+    /* 節が全部チェック済みかどうかを判定する */
+    const allDone = isAllSectionsDone(chapter, status);
+
+    /* chapterElementMap から章カードの DOM 情報を取得する */
+    const chEls = chapterElementMap.get(chapter.id);
+    if (!chEls) return;
+
+    /* 章チェックボックスを節の状態に合わせて自動更新する */
+    chEls.chkEl.checked = allDone;
+
+    /* 章カードの is-done クラスを切り替える（タイトルの取り消し線を制御） */
+    chEls.card.classList.toggle('is-done', allDone);
   });
 }
 
-function createSectionElement(section, chapterId) {
-  const li = document.createElement('li');
-  li.className = 'section-item' + (section.done ? ' is-done' : '');
-  li.dataset.sectionId = section.id;
-  li.dataset.chapterId = chapterId;
+/* ============================================================
+   DOM 生成（HTMLを動的に作成する）
+   ============================================================ */
 
-  const checkbox = document.createElement('input');
-  checkbox.type = 'checkbox';
-  checkbox.className = 'section-checkbox';
-  checkbox.checked = section.done;
-  checkbox.setAttribute('aria-label', '節を完了にする');
-  checkbox.addEventListener('click', event => event.stopPropagation());
-  checkbox.addEventListener('change', () => {
-    toggleSection(section.id, checkbox.checked, li);
-  });
-
-  const textSpan = document.createElement('span');
-  textSpan.className = 'section-text';
-  textSpan.textContent = section.text;
-
-  li.appendChild(checkbox);
-  li.appendChild(textSpan);
-
-  return li;
+/**
+ * 全体進捗バーの HTML 要素を生成して返す
+ * @returns {HTMLElement}
+ */
+function createProgressBarElement() {
+  const wrapper = document.createElement('div');
+  wrapper.className = 'progress-bar-wrapper';
+  wrapper.innerHTML = `
+    <div class="progress-bar-label">
+      <span>学習進捗（全体）</span>
+      <span id="progress-label">0%</span>
+    </div>
+    <div class="progress-bar-track">
+      <div class="progress-bar-fill" id="progress-fill"></div>
+    </div>
+  `;
+  return wrapper;
 }
 
-function createChapterElement(chapter) {
-  const li = document.createElement('li');
-  li.className = 'chapter-card is-open';
-  li.dataset.chapterId = chapter.id;
+/**
+ * 章カード 1枚分の HTML 要素を生成して返す
+ *
+ * 構造:
+ *   .chapter-card
+ *     .chapter-header  ← クリックで開閉（チェックボックスは独立して動作）
+ *       チェックボックス / タイトル / ミニ進捗バー / 矢印アイコン
+ *     .section-list-wrapper  ← アコーディオン部分
+ *       ul.section-list
+ *         li.section-item × 節の数
+ *
+ * @param {Array}  chapters        - 章データの配列（updateAllDisplay に渡すため）
+ * @param {Object} chapter         - この章のデータ
+ * @param {Object} status          - 節のチェック状態オブジェクト
+ * @param {Map}    chapterElementMap - 章IDとDOM要素の対応マップ（更新用）
+ * @returns {HTMLElement}
+ */
+function createChapterCard(chapters, chapter, status, chapterElementMap) {
 
+  /* ── 章カードのルート要素 ── */
+  const card = document.createElement('div');
+  card.className = 'chapter-card';
+
+  /* ── 章ヘッダー（クリックで開閉する行） ── */
   const header = document.createElement('div');
   header.className = 'chapter-header';
-  header.tabIndex = 0;
-  header.setAttribute('role', 'button');
-  header.setAttribute('aria-expanded', 'true');
+  header.setAttribute('aria-expanded', 'false');
 
-  header.addEventListener('click', event => {
-    if (event.target.closest('input')) return;
-    toggleChapterCollapse(li);
-  });
+  /* 章のチェックボックス
+     節が全部チェック済みのとき checked = true にする */
+  const chapterCheckbox = document.createElement('input');
+  chapterCheckbox.type      = 'checkbox';
+  chapterCheckbox.className = 'chapter-checkbox';
+  chapterCheckbox.checked   = isAllSectionsDone(chapter, status);
+  chapterCheckbox.setAttribute('aria-label', chapter.title + ' 全節完了');
 
-  header.addEventListener('keydown', event => {
-    if (event.key === 'Enter' || event.key === ' ') {
-      event.preventDefault();
-      if (event.target.closest('input')) return;
-      toggleChapterCollapse(li);
-    }
-  });
-
-  const checkbox = document.createElement('input');
-  checkbox.type = 'checkbox';
-  checkbox.className = 'chapter-checkbox';
-  checkbox.id = `chapter-checkbox-${chapter.id}`;
-  checkbox.checked = getChapterDoneState(chapter);
-  checkbox.setAttribute('aria-label', '章を完了にする');
-  checkbox.addEventListener('click', event => event.stopPropagation());
-  checkbox.addEventListener('change', () => {
-    toggleChapter(chapter.id, checkbox.checked);
-  });
-
+  /* 章のタイトルテキスト */
   const titleSpan = document.createElement('span');
-  titleSpan.className = 'chapter-title';
+  titleSpan.className   = 'chapter-title';
   titleSpan.textContent = chapter.title;
 
-  const progressWrapper = document.createElement('div');
-  progressWrapper.className = 'chapter-progress';
+  /* 章ごとのミニ進捗バー（節のチェック数で計算） */
+  const progressWrap = document.createElement('div');
+  progressWrap.className = 'chapter-progress-wrap';
+  progressWrap.innerHTML = `
+    <span class="chapter-progress-pct" id="chapter-progress-pct-${chapter.id}">0%</span>
+    <div class="chapter-progress-track">
+      <div class="chapter-progress-fill" id="chapter-progress-fill-${chapter.id}"></div>
+    </div>
+  `;
 
-  const progressLabel = document.createElement('span');
-  progressLabel.className = 'chapter-progress-label';
-  progressLabel.id = `chapter-progress-label-${chapter.id}`;
-  progressLabel.textContent = `${getChapterProgress(chapter)}%`;
+  /* 開閉の矢印アイコン */
+  const arrow = document.createElement('span');
+  arrow.className = 'chapter-arrow';
+  arrow.innerHTML = `
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
+         stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <polyline points="6 9 12 15 18 9"/>
+    </svg>
+  `;
 
-  const progressTrack = document.createElement('div');
-  progressTrack.className = 'chapter-progress-track';
-  const progressFill = document.createElement('div');
-  progressFill.className = 'chapter-progress-fill';
-  progressFill.id = `chapter-progress-fill-${chapter.id}`;
-  progressFill.style.width = `${getChapterProgress(chapter)}%`;
-  progressTrack.appendChild(progressFill);
-
-  progressWrapper.appendChild(progressLabel);
-  progressWrapper.appendChild(progressTrack);
-
-  const toggleIcon = document.createElement('span');
-  toggleIcon.className = 'chapter-toggle-icon';
-  toggleIcon.textContent = '▾';
-
-  header.appendChild(checkbox);
+  /* ヘッダーに各要素を追加 */
+  header.appendChild(chapterCheckbox);
   header.appendChild(titleSpan);
-  header.appendChild(progressWrapper);
-  header.appendChild(toggleIcon);
+  header.appendChild(progressWrap);
+  header.appendChild(arrow);
+
+  /* ── 節リストのアコーディオンエリア ── */
+  const sectionWrapper = document.createElement('div');
+  sectionWrapper.className = 'section-list-wrapper';
 
   const sectionList = document.createElement('ul');
   sectionList.className = 'section-list';
 
-  chapter.sections.forEach(section => {
-    sectionList.appendChild(createSectionElement(section, chapter.id));
+  /* 節ごとのDOM要素を記録するマップ（章チェック時の一括操作に使う） */
+  const sectionElementMap = new Map();
+
+  /* 節アイテムを1件ずつ生成してリストに追加する */
+  chapter.sections.forEach((sec, index) => {
+    const { li, checkbox: secChk } = createSectionItem(
+      chapters, chapter, sec, index, status, chapterElementMap
+    );
+    sectionElementMap.set(sec.id, { li, chkEl: secChk });
+    sectionList.appendChild(li);
   });
 
-  li.appendChild(header);
-  li.appendChild(sectionList);
+  sectionWrapper.appendChild(sectionList);
+  card.appendChild(header);
+  card.appendChild(sectionWrapper);
 
-  return li;
-}
-
-function renderAllChapters() {
-  chapterList.innerHTML = '';
-  chapters.forEach(chapter => {
-    chapterList.appendChild(createChapterElement(chapter));
+  /* chapterElementMap にこの章のDOM情報を登録する
+     他の関数（updateAllDisplay）から参照できるようにするため */
+  chapterElementMap.set(chapter.id, {
+    card,
+    chkEl: chapterCheckbox,
+    sectionElementMap
   });
-  updateStats();
-  updateProgressBars();
-}
 
-function toggleChapterCollapse(chapterCard) {
-  const isOpen = chapterCard.classList.toggle('is-open');
-  const header = chapterCard.querySelector('.chapter-header');
-  if (header) {
+  /* 初期表示: 全節チェック済みなら is-done クラスを付ける */
+  if (isAllSectionsDone(chapter, status)) {
+    card.classList.add('is-done');
+  }
+
+  /* ─────────────────────────────────────────────────────────
+     章ヘッダーのクリックイベント（開閉）
+
+     チェックボックスをクリックしたときは開閉しない。
+     それ以外の場所（タイトル・矢印・余白など）をクリックしたときだけ開閉する。
+     ───────────────────────────────────────────────────────── */
+  header.addEventListener('click', (e) => {
+    /* クリック対象がチェックボックス自身の場合は、開閉処理をスキップする */
+    if (e.target === chapterCheckbox) return;
+
+    /* カードに is-open クラスをトグルして開閉する */
+    const isOpen = card.classList.toggle('is-open');
     header.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
-  }
+  });
+
+  /* ─────────────────────────────────────────────────────────
+     章チェックボックスの変更イベント
+
+     章チェックをONにしたら → 配下の全節をONにする
+     章チェックをOFFにしたら → 配下の全節をOFFにする
+
+     節のチェック状態を変えた結果として進捗率も変わる。
+     ───────────────────────────────────────────────────────── */
+  chapterCheckbox.addEventListener('change', () => {
+    const currentStatus = loadCheckStatus();
+
+    /* 配下のすべての節を章チェックと同じ状態にする */
+    chapter.sections.forEach(sec => {
+      /* ① statusオブジェクトを更新する */
+      currentStatus[sec.id] = chapterCheckbox.checked;
+
+      /* ② 節のチェックボックス要素のcheckedプロパティを更新する */
+      const secEls = sectionElementMap.get(sec.id);
+      if (secEls) {
+        secEls.chkEl.checked = chapterCheckbox.checked;
+
+        /* ③ 節アイテムの is-done クラスを切り替える */
+        secEls.li.classList.toggle('is-done', chapterCheckbox.checked);
+      }
+    });
+
+    /* ④ ローカルストレージに保存する */
+    saveCheckStatus(currentStatus);
+
+    /* ⑤ 進捗バー・統計を再計算して表示を更新する */
+    updateAllDisplay(chapters, currentStatus, chapterElementMap);
+  });
+
+  return card;
 }
 
-function updateOverallProgress() {
-  const fill = document.getElementById('overall-progress-fill');
-  const label = document.getElementById('overall-progress-label');
-  if (!fill || !label) return;
+/**
+ * 節アイテム 1件分の HTML 要素を生成して返す
+ *
+ * @param {Array}  chapters        - 章データの配列（updateAllDisplay に渡すため）
+ * @param {Object} chapter         - 親の章データ
+ * @param {Object} sec             - 節データ { id, text }
+ * @param {number} index           - 節のインデックス（番号表示に使用）
+ * @param {Object} status          - 節のチェック状態オブジェクト
+ * @param {Map}    chapterElementMap - 章IDとDOM要素の対応マップ
+ * @returns {{ li: HTMLElement, checkbox: HTMLInputElement }}
+ */
+function createSectionItem(chapters, chapter, sec, index, status, chapterElementMap) {
 
-  const percent = getOverallProgress();
-  fill.style.width = `${percent}%`;
-  label.textContent = `${percent}%`;
-}
+  /* 節アイテムのルート要素 */
+  const li = document.createElement('li');
+  li.className = 'section-item' + (status[sec.id] ? ' is-done' : '');
 
-function updateChapterProgress(chapter) {
-  const percent = getChapterProgress(chapter);
-  const fill = document.getElementById(`chapter-progress-fill-${chapter.id}`);
-  const label = document.getElementById(`chapter-progress-label-${chapter.id}`);
-  if (!fill || !label) return;
+  /* 節の番号バッジ（例: 1-1, 1-2） */
+  const numSpan = document.createElement('span');
+  numSpan.className   = 'section-num';
+  /* ch1 → 1、ch2 → 2 のように数字部分だけを取り出す */
+  const chapterNum    = chapter.id.replace('ch', '');
+  numSpan.textContent = chapterNum + '-' + (index + 1);
 
-  fill.style.width = `${percent}%`;
-  label.textContent = `${percent}%`;
-}
+  /* 節のチェックボックス */
+  const checkbox = document.createElement('input');
+  checkbox.type      = 'checkbox';
+  checkbox.className = 'section-checkbox';
+  checkbox.checked   = !!status[sec.id]; /* !! で boolean 型に変換 */
+  checkbox.setAttribute('aria-label', sec.text + ' 完了');
 
-function updateProgressBars() {
-  updateOverallProgress();
-  chapters.forEach(updateChapterProgress);
-}
+  /* 節のテキスト */
+  const textSpan = document.createElement('span');
+  textSpan.className   = 'section-text';
+  textSpan.textContent = sec.text;
 
-function updateStats() {
-  const allSections = getAllSections();
-  const doneCount = allSections.filter(section => section.done).length;
-  const total = allSections.length;
-  statTotal.textContent = total;
-  statDone.textContent = doneCount;
-  statRemaining.textContent = total - doneCount;
-}
+  li.appendChild(numSpan);
+  li.appendChild(checkbox);
+  li.appendChild(textSpan);
 
-async function fetchChapterData() {
-  const response = await fetch(CHAPTERS_DATA_URL);
-  if (!response.ok) {
-    throw new Error(`章データの読み込みに失敗しました: ${response.status} ${response.statusText}`);
-  }
-  return response.json();
-}
+  /* ─────────────────────────────────────────────────────────
+     節チェックボックスの変更イベント
 
-async function initApp() {
-  try {
-    const chapterData = await fetchChapterData();
-    loadTasks(chapterData);
-    renderAllChapters();
-  } catch (e) {
-    showError('アプリケーションの初期化に失敗しました:', e);
-  }
+     1. 節のチェック状態を保存する
+     2. 節アイテムの見た目（取り消し線）を更新する
+     3. updateAllDisplay() を呼んで以下をまとめて更新する:
+        - 章チェックボックス（全節ONなら章もON、1つでもOFFなら章もOFF）
+        - 章ごとのミニ進捗バー
+        - 全体の進捗バー
+        - ヘッダーの統計
+     ───────────────────────────────────────────────────────── */
+  checkbox.addEventListener('change', () => {
+    const currentStatus = loadCheckStatus();
+
+    /* ① 節のチェック状態を更新する */
+    currentStatus[sec.id] = checkbox.checked;
+
+    /* ② ローカルストレージに保存する */
+    saveCheckStatus(currentStatus);
+
+    /* ③ 節アイテムの is-done クラスを切り替える */
+    li.classList.toggle('is-done', checkbox.checked);
+
+    /* ④ 全体の表示（進捗バー・統計・章チェック）を更新する */
+    updateAllDisplay(chapters, currentStatus, chapterElementMap);
+  });
+
+  return { li, checkbox };
 }
 
 /* ============================================================
    初期化
-   HTMLの読み込みが終わった瞬間に実行する
+   DOMContentLoaded 後に chapters.json を fetch で読み込み、
+   読み込み完了後に UI を構築する。
    ============================================================ */
-document.addEventListener('DOMContentLoaded', initApp);
+document.addEventListener('DOMContentLoaded', async () => {
+
+  /* ① chapters.json を読み込む */
+  let chapters;
+  try {
+    chapters = await loadChapters();
+  } catch (e) {
+    console.error(e);
+    /* 読み込み失敗時はエラーメッセージをページに表示して処理を止める */
+    const chapterListEl = document.getElementById('chapter-list');
+    chapterListEl.innerHTML =
+      '<p style="color:#f55;font-family:monospace;padding:16px;">' +
+      '⚠️ chapters.json の読み込みに失敗しました。<br>' +
+      'HTTPサーバー経由でページを開いているか確認してください。</p>';
+    return;
+  }
+
+  /* ② ローカルストレージから節のチェック状態を読み込む */
+  const status = loadCheckStatus();
+
+  /* ③ 全体の進捗バーを生成して、chapter-list の直前に挿入する */
+  const chapterListEl = document.getElementById('chapter-list');
+  const progressBar   = createProgressBarElement();
+  chapterListEl.before(progressBar);
+
+  /* ④ 章カードとDOM要素の対応を管理するマップを作成する
+        Map のキー: 章ID（例: 'ch1'）
+        Map の値 : { card, chkEl, sectionElementMap } */
+  const chapterElementMap = new Map();
+
+  /* ⑤ 章リストのコンテナを作成する */
+  const listContainer = document.createElement('div');
+  listContainer.className = 'chapter-list';
+
+  /* ⑥ 各章カードを生成してリストに追加する
+        chapters 配列は JSON から読み込んだデータをそのまま使用する */
+  chapters.forEach(chapter => {
+    const card = createChapterCard(chapters, chapter, status, chapterElementMap);
+    listContainer.appendChild(card);
+  });
+
+  /* ⑦ 章リストをページに挿入する */
+  chapterListEl.appendChild(listContainer);
+
+  /* ⑧ ページ読み込み時点のチェック状態で統計・進捗バーを初期表示する */
+  updateAllDisplay(chapters, status, chapterElementMap);
+});

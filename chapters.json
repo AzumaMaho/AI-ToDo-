@@ -1,53 +1,52 @@
 [
   {
-    "id": "chapter-01",
+    "id": "ch1",
     "title": "第1章 AI（人工知能）",
     "sections": [
-      { "id": "chapter-01-section-01", "text": "AIとは何か" },
-      { "id": "chapter-01-section-02", "text": "AIの歴史" },
-      { "id": "chapter-01-section-03", "text": "AIの種類" },
-      { "id": "chapter-01-section-04", "text": "機械学習とディープラーニング" },
-      { "id": "chapter-01-section-05", "text": "AI活用の基本概念" }
+      { "id": "ch1-s1", "text": "AIの定義と歴史を理解する" },
+      { "id": "ch1-s2", "text": "AIの種類（特化型・汎用型）を学ぶ" },
+      { "id": "ch1-s3", "text": "機械学習・深層学習の基本を学ぶ" },
+      { "id": "ch1-s4", "text": "AIと人間の違いを整理する" }
     ]
   },
   {
-    "id": "chapter-02",
+    "id": "ch2",
     "title": "第2章 生成AI",
     "sections": [
-      { "id": "chapter-02-section-01", "text": "生成AIの基本" },
-      { "id": "chapter-02-section-02", "text": "プロンプトの役割" },
-      { "id": "chapter-02-section-03", "text": "生成AIの代表例" },
-      { "id": "chapter-02-section-04", "text": "生成AIのメリットと課題" }
+      { "id": "ch2-s1", "text": "生成AIの仕組みを理解する" },
+      { "id": "ch2-s2", "text": "大規模言語モデル（LLM）の概要を学ぶ" },
+      { "id": "ch2-s3", "text": "画像・音声・動画生成AIの種類を学ぶ" },
+      { "id": "ch2-s4", "text": "プロンプトエンジニアリングの基本を学ぶ" }
     ]
   },
   {
-    "id": "chapter-03",
+    "id": "ch3",
     "title": "第3章 AIの活用事例",
     "sections": [
-      { "id": "chapter-03-section-01", "text": "教育分野でのAI活用" },
-      { "id": "chapter-03-section-02", "text": "ビジネスでの導入例" },
-      { "id": "chapter-03-section-03", "text": "医療・ヘルスケアの事例" },
-      { "id": "chapter-03-section-04", "text": "クリエイティブ分野の応用" }
+      { "id": "ch3-s1", "text": "ビジネス分野でのAI活用事例を学ぶ" },
+      { "id": "ch3-s2", "text": "医療・ヘルスケア分野のAI事例を学ぶ" },
+      { "id": "ch3-s3", "text": "教育・公共分野でのAI活用を学ぶ" },
+      { "id": "ch3-s4", "text": "身近なAIサービス（検索・推薦など）を確認する" }
     ]
   },
   {
-    "id": "chapter-04",
+    "id": "ch4",
     "title": "第4章 AIのリスクと対策",
     "sections": [
-      { "id": "chapter-04-section-01", "text": "AIに潜むリスク" },
-      { "id": "chapter-04-section-02", "text": "偏りとバイアス" },
-      { "id": "chapter-04-section-03", "text": "個人情報の取り扱い" },
-      { "id": "chapter-04-section-04", "text": "安全対策の考え方" }
+      { "id": "ch4-s1", "text": "AIのバイアス・公平性の問題を学ぶ" },
+      { "id": "ch4-s2", "text": "フェイクニュース・ディープフェイクのリスクを学ぶ" },
+      { "id": "ch4-s3", "text": "プライバシーとセキュリティの課題を学ぶ" },
+      { "id": "ch4-s4", "text": "AIの安全な利用ガイドラインを確認する" }
     ]
   },
   {
-    "id": "chapter-05",
+    "id": "ch5",
     "title": "第5章 AIに関する法律・倫理",
     "sections": [
-      { "id": "chapter-05-section-01", "text": "AI関連法の基礎" },
-      { "id": "chapter-05-section-02", "text": "倫理的な考え方" },
-      { "id": "chapter-05-section-03", "text": "責任と運用ルール" },
-      { "id": "chapter-05-section-04", "text": "安全な利用のために" }
+      { "id": "ch5-s1", "text": "AI関連の国内法・ガイドラインを学ぶ" },
+      { "id": "ch5-s2", "text": "EUのAI規制・国際的な動向を学ぶ" },
+      { "id": "ch5-s3", "text": "AIの倫理原則（透明性・公平性など）を学ぶ" },
+      { "id": "ch5-s4", "text": "著作権・知的財産とAIの関係を確認する" }
     ]
   }
 ]
