@@ -12,46 +12,48 @@
   --accent2:    #ffb566;      /* サブアクセントカラー */
   --text:       #1a1a1a;      /* メインテキストカラー */
   --muted:      #6b5b4f;      /* 補助テキストカラー */
-  --done-bg:    #FFF1E6;
+  --done-bg:    #FFF1E6;      /* 完了アイテムの背景色 */
   --done-text:  #b3a39a;      /* 完了アイテムのテキストカラー */
-  --red:        #ff4d4f;      /* 不正解・警告カラー */
+  --red:        #ff4d4f;      /* エラーや警告の色 */
   --radius:     10px;         /* 角丸の大きさ */
-  --radius-sm:  7px;          /* 節カードの角丸 */
-  --shadow:     0 4px 32px rgba(202, 139, 43, 0.4);
-  --transition: 0.2s ease;
+  --radius-sm:  7px;          /* 小さい角丸の大きさ */
+  --shadow:     0 4px 32px rgba(202, 139, 43, 0.4); /* カードの影 */
+  --transition: 0.2s ease;  /* アニメーション速度 */
 }
 
-/* ─── Reset & Base ──────────────────────────────────────── */
+/* ─── リセット（ブラウザ差をなくす） ───────────────── */
 *,
 *::before,
 *::after {
-  box-sizing: border-box;
-  margin: 0;
+  box-sizing: border-box; /* padding込みでサイズ計算 */
+  margin: 0;              /* 余白リセット */
   padding: 0;
 }
 
+/* ─── ページ全体の基本設定 ───────────────── */
 body {
-  background: var(--bg);
-  color: var(--text);
-  font-family: 'Zen Kaku Gothic New', sans-serif;
-  min-height: 100vh;
+  background: var(--bg); /* 背景色 */
+  color: var(--text);    /* 文字色 */
+  font-family: 'Zen Kaku Gothic New', sans-serif; /* フォント */
+  min-height: 100vh;     /* 画面いっぱいの高さ */
   display: flex;
   flex-direction: column;
-  align-items: center;
-  padding: 60px 16px 80px;
+  align-items: center;   /* 横中央揃え */
+  padding: 60px 16px 80px; /* 上下左右の余白 */
   position: relative;
-  overflow-x: hidden;
+  overflow-x: hidden;    /* 横スクロール防止 */
 }
 
-/* ─── Background Glow Decorations ──────────────────────── */
+/* ─── 背景のぼかし光エフェクト ───────────────── */
 .bg-glow {
-  position: fixed;
-  border-radius: 50%;
-  pointer-events: none;
-  z-index: 0;
-  filter: blur(80px);
+  position: fixed;       /* 画面固定 */
+  border-radius: 50%;    /* 円形 */
+  pointer-events: none;  /* クリック無効 */
+  z-index: 0;            /* 背面 */
+  filter: blur(80px);    /* ぼかし */
 }
 
+/* 右上の光 */
 .bg-glow--top {
   width: 600px;
   height: 400px;
@@ -60,6 +62,7 @@ body {
   background: radial-gradient(ellipse, rgba(200, 245, 66, 0.07) 0%, transparent 70%);
 }
 
+/* 左下の光 */
 .bg-glow--bottom {
   width: 400px;
   height: 600px;
@@ -68,19 +71,20 @@ body {
   background: radial-gradient(ellipse, rgba(66, 245, 200, 0.05) 0%, transparent 70%);
 }
 
-/* ─── Container ─────────────────────────────────────────── */
+/* ─── メインコンテナ（中央の内容） ───────────────── */
 .container {
   position: relative;
-  z-index: 1;
+  z-index: 1;        /* 背景より前に表示 */
   width: 100%;
-  max-width: 640px;
+  max-width: 640px;  /* 横幅制限 */
 }
 
-/* ─── Header ────────────────────────────────────────────── */
+/* ─── Header 部分(枠付きタイトル)────────────────────────────────────────────── */
 .header {
   margin-bottom: 40px;
 }
 
+/* 小さいラベル文字 */
 .label {
   font-family: 'DM Mono', monospace;
   font-size: 11px;
@@ -90,13 +94,15 @@ body {
   margin-bottom: 8px;
 }
 
+/* タイトル */
 .title {
-  font-size: clamp(2rem, 6vw, 3rem);
+  font-size: clamp(2rem, 6vw, 3rem); /* 画面に応じてサイズ変化 */
   font-weight: 900;
   line-height: 1;
   letter-spacing: -0.02em;
 }
 
+/* タイトルの一部を強調 */
 .title__accent {
   color: var(--accent);
 }
@@ -112,15 +118,18 @@ body {
   flex-wrap: wrap;
 }
 
+/* 数値部分 */
 .stats__value {
   font-weight: 500;
   color: var(--accent2);
 }
 
+/* 完了数 */
 .stats__value--done {
   color: var(--accent);
 }
 
+/* 残り数 */
 .stats__value--remaining {
   color: var(--accent2);
 }
@@ -131,6 +140,7 @@ body {
   margin-bottom: 28px;
 }
 
+/* ラベル */
 .progress-bar-label {
   font-family: 'DM Mono', monospace;
   font-size: 11px;
@@ -144,6 +154,7 @@ body {
   color: var(--accent);
 }
 
+/* 外枠 */
 .progress-bar-track {
   width: 100%;
   height: 4px;
@@ -152,12 +163,13 @@ body {
   overflow: hidden;
 }
 
+/* 進捗部分 */
 .progress-bar-fill {
   height: 100%;
   background: linear-gradient(90deg, var(--accent2), var(--accent));
   border-radius: 2px;
-  width: 0%;                       /* JavaScriptで動的に変更される */
-  transition: width 0.4s ease;
+  width: 0%;
+  transition: width 0.4s ease; /* アニメーション */
 }
 
 /* ─── Task List ──────────────────────────────────────────── */
@@ -168,7 +180,7 @@ body {
   gap: 10px;
 }
 
-/* ─── Task Item ──────────────────────────────────────────── */
+/* ─── Task Card ──────────────────────────────────────────── */
 .task-item {
   background: var(--surface);
   border: 1px solid var(--border);
@@ -182,16 +194,18 @@ body {
   transition: border-color var(--transition), background var(--transition);
 }
 
+/* ホバー時 */
 .task-item:hover {
   border-color: var(--muted);
 }
 
+/* 完了状態 */
 .task-item.is-done {
   background: var(--done-bg);
   border-color: transparent;
 }
 
-/* ─── Animations ─────────────────────────────────────────── */
+/* ─── アニメーション（下からふわっと表示） ───────────────── */
 @keyframes slideIn {
   from {
     opacity: 0;
@@ -228,15 +242,18 @@ body {
   transition: border-color var(--transition), background var(--transition);
 }
 
+/* ホバー */
 .task-checkbox:hover {
   border-color: var(--accent);
 }
 
+/* チェック時 */
 .task-checkbox:checked {
   background: var(--accent);
   border-color: var(--accent);
 }
 
+/* チェックマーク */
 .task-checkbox:checked::after {
   content: '';
   position: absolute;
@@ -264,6 +281,7 @@ body {
   transition: color var(--transition);
 }
 
+/* 完了時（取り消し線） */
 .task-item.is-done .task-text {
   text-decoration: line-through;
   color: var(--done-text);
@@ -283,13 +301,13 @@ body {
   border-radius: 2px;
 }
 
-/* ─── Responsive ─────────────────────────────────────────── */
+/* ─── スマホ対応 ───────────────── */
 @media (max-width: 480px) {
   body {
     padding: 40px 12px 60px;
   }
 
-  /* ▼ 変更点: .input-section と .btn-add のレスポンシブ設定を削除 */
+  
   .task-item {
     padding: 14px;
     gap: 10px;
