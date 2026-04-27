@@ -1,0 +1,53 @@
+[
+  {
+    "id": "chapter-01",
+    "title": "第1章 AI（人工知能）",
+    "sections": [
+      { "id": "chapter-01-section-01", "text": "AIとは何か" },
+      { "id": "chapter-01-section-02", "text": "AIの歴史" },
+      { "id": "chapter-01-section-03", "text": "AIの種類" },
+      { "id": "chapter-01-section-04", "text": "機械学習とディープラーニング" },
+      { "id": "chapter-01-section-05", "text": "AI活用の基本概念" }
+    ]
+  },
+  {
+    "id": "chapter-02",
+    "title": "第2章 生成AI",
+    "sections": [
+      { "id": "chapter-02-section-01", "text": "生成AIの基本" },
+      { "id": "chapter-02-section-02", "text": "プロンプトの役割" },
+      { "id": "chapter-02-section-03", "text": "生成AIの代表例" },
+      { "id": "chapter-02-section-04", "text": "生成AIのメリットと課題" }
+    ]
+  },
+  {
+    "id": "chapter-03",
+    "title": "第3章 AIの活用事例",
+    "sections": [
+      { "id": "chapter-03-section-01", "text": "教育分野でのAI活用" },
+      { "id": "chapter-03-section-02", "text": "ビジネスでの導入例" },
+      { "id": "chapter-03-section-03", "text": "医療・ヘルスケアの事例" },
+      { "id": "chapter-03-section-04", "text": "クリエイティブ分野の応用" }
+    ]
+  },
+  {
+    "id": "chapter-04",
+    "title": "第4章 AIのリスクと対策",
+    "sections": [
+      { "id": "chapter-04-section-01", "text": "AIに潜むリスク" },
+      { "id": "chapter-04-section-02", "text": "偏りとバイアス" },
+      { "id": "chapter-04-section-03", "text": "個人情報の取り扱い" },
+      { "id": "chapter-04-section-04", "text": "安全対策の考え方" }
+    ]
+  },
+  {
+    "id": "chapter-05",
+    "title": "第5章 AIに関する法律・倫理",
+    "sections": [
+      { "id": "chapter-05-section-01", "text": "AI関連法の基礎" },
+      { "id": "chapter-05-section-02", "text": "倫理的な考え方" },
+      { "id": "chapter-05-section-03", "text": "責任と運用ルール" },
+      { "id": "chapter-05-section-04", "text": "安全な利用のために" }
+    ]
+  }
+]

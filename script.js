@@ -1,61 +1,9 @@
 ﻿/* ============================================================
    ▼ 変更点: 章と節の構造に変更
-   章のチェックは配下の節をすべてON/OFFにし、
-   節の状態は章のチェックボックスに反映されます。
+   章・節の情報を外部JSON（chapters.json）で管理し、
+   チェック状態はローカルストレージで保持します。
    ============================================================ */
-const INITIAL_CHAPTERS = [
-  {
-    id: 'chapter-01',
-    title: '第1章 AI（人工知能）',
-    sections: [
-      { id: 'chapter-01-section-01', text: 'AIとは何か', done: false },
-      { id: 'chapter-01-section-02', text: 'AIの歴史', done: false },
-      { id: 'chapter-01-section-03', text: 'AIの種類', done: false },
-      { id: 'chapter-01-section-04', text: '機械学習とディープラーニング', done: false },
-      { id: 'chapter-01-section-05', text: 'AI活用の基本概念', done: false },
-    ]
-  },
-  {
-    id: 'chapter-02',
-    title: '第2章 生成AI',
-    sections: [
-      { id: 'chapter-02-section-01', text: '生成AIの基本', done: false },
-      { id: 'chapter-02-section-02', text: 'プロンプトの役割', done: false },
-      { id: 'chapter-02-section-03', text: '生成AIの代表例', done: false },
-      { id: 'chapter-02-section-04', text: '生成AIのメリットと課題', done: false },
-    ]
-  },
-  {
-    id: 'chapter-03',
-    title: '第3章 AIの活用事例',
-    sections: [
-      { id: 'chapter-03-section-01', text: '教育分野でのAI活用', done: false },
-      { id: 'chapter-03-section-02', text: 'ビジネスでの導入例', done: false },
-      { id: 'chapter-03-section-03', text: '医療・ヘルスケアの事例', done: false },
-      { id: 'chapter-03-section-04', text: 'クリエイティブ分野の応用', done: false },
-    ]
-  },
-  {
-    id: 'chapter-04',
-    title: '第4章 AIのリスクと対策',
-    sections: [
-      { id: 'chapter-04-section-01', text: 'AIに潜むリスク', done: false },
-      { id: 'chapter-04-section-02', text: '偏りとバイアス', done: false },
-      { id: 'chapter-04-section-03', text: '個人情報の取り扱い', done: false },
-      { id: 'chapter-04-section-04', text: '安全対策の考え方', done: false },
-    ]
-  },
-  {
-    id: 'chapter-05',
-    title: '第5章 AIに関する法律・倫理',
-    sections: [
-      { id: 'chapter-05-section-01', text: 'AI関連法の基礎', done: false },
-      { id: 'chapter-05-section-02', text: '倫理的な考え方', done: false },
-      { id: 'chapter-05-section-03', text: '責任と運用ルール', done: false },
-      { id: 'chapter-05-section-04', text: '安全な利用のために', done: false },
-    ]
-  }
-];
+const CHAPTERS_DATA_URL = './chapters.json';
 
 /* ─── 定数 ──────────────────────────────────────────────── */
 const STORAGE_KEY = 'ai-passport-sections';
@@ -74,12 +22,12 @@ const statRemaining    = document.getElementById('stat-remaining');
    ローカルストレージ（データ保存・読み込み）
    ============================================================ */
 
-function loadTasks() {
+function loadTasks(chapterData) {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     const savedStatus = raw ? JSON.parse(raw) : {};
 
-    chapters = INITIAL_CHAPTERS.map(chapter => ({
+    chapters = chapterData.map(chapter => ({
       ...chapter,
       sections: chapter.sections.map(section => ({
         ...section,
@@ -88,9 +36,9 @@ function loadTasks() {
     }));
   } catch (e) {
     console.error('チェック状態の読み込みに失敗しました:', e);
-    chapters = INITIAL_CHAPTERS.map(chapter => ({
+    chapters = chapterData.map(chapter => ({
       ...chapter,
-      sections: chapter.sections.map(section => ({ ...section }))
+      sections: chapter.sections.map(section => ({ ...section, done: false }))
     }));
   }
 }
@@ -333,11 +281,26 @@ function updateStats() {
   statRemaining.textContent = total - doneCount;
 }
 
+async function fetchChapterData() {
+  const response = await fetch(CHAPTERS_DATA_URL);
+  if (!response.ok) {
+    throw new Error(`章データの読み込みに失敗しました: ${response.status} ${response.statusText}`);
+  }
+  return response.json();
+}
+
+async function initApp() {
+  try {
+    const chapterData = await fetchChapterData();
+    loadTasks(chapterData);
+    renderAllChapters();
+  } catch (e) {
+    console.error('アプリケーションの初期化に失敗しました:', e);
+  }
+}
+
 /* ============================================================
    初期化
    HTMLの読み込みが終わった瞬間に実行する
    ============================================================ */
-document.addEventListener('DOMContentLoaded', () => {
-  loadTasks();
-  renderAllChapters();
-});
+document.addEventListener('DOMContentLoaded', initApp);
