@@ -17,6 +17,10 @@ const statTotal        = document.getElementById('stat-total');
 const statDone         = document.getElementById('stat-done');
 const statRemaining    = document.getElementById('stat-remaining');
 
+/* ─── 最小エラー表示（追加） ─────────────────────────────── */
+function showError(msg) {
+  alert(msg);
+}
 
 /* ============================================================
    ローカルストレージ（データ保存・読み込み）
@@ -35,7 +39,7 @@ function loadTasks(chapterData) {
       }))
     }));
   } catch (e) {
-    console.error('チェック状態の読み込みに失敗しました:', e);
+    showError('チェック状態の読み込みに失敗しました:', e);
     chapters = chapterData.map(chapter => ({
       ...chapter,
       sections: chapter.sections.map(section => ({ ...section, done: false }))
@@ -53,7 +57,7 @@ function saveTasks() {
     });
     localStorage.setItem(STORAGE_KEY, JSON.stringify(statusMap));
   } catch (e) {
-    console.error('チェック状態の保存に失敗しました:', e);
+    showError('チェック状態の保存に失敗しました:', e);
   }
 }
 
@@ -295,7 +299,7 @@ async function initApp() {
     loadTasks(chapterData);
     renderAllChapters();
   } catch (e) {
-    console.error('アプリケーションの初期化に失敗しました:', e);
+    showError('アプリケーションの初期化に失敗しました:', e);
   }
 }
 
