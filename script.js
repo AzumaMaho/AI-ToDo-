@@ -23,7 +23,7 @@
    ============================================================ */
 
 /* ─── 定数 ──────────────────────────────────────────────── */
-/** chapters.json の読み込みパス */
+/** chapters.jsonというファイルを使う */
 const CHAPTERS_JSON_PATH = 'chapters.json';
 
 /** ローカルストレージへの保存キー */
@@ -37,7 +37,8 @@ function showError(msg) {
 function loadCheckStatus() {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
-    return raw ? JSON.parse(raw) : {};
+    // 文字列をオブジェクトに変換して返す
+    return raw ? JSON.parse(raw) : {}; // データがないときは空オブジェクトを返す
   } catch (e) {
     showError('チェック状態の読み込みに失敗しました:', e);
     return {};
@@ -47,6 +48,7 @@ function loadCheckStatus() {
 /* 節のチェック状態をローカルストレージに保存する */
 function saveCheckStatus(status) {
   try {
+    // オブジェクトを文字列に変換して保存する
     localStorage.setItem(STORAGE_KEY, JSON.stringify(status));
   } catch (e) {
     showError('チェック状態の保存に失敗しました:', e);
@@ -56,10 +58,10 @@ function saveCheckStatus(status) {
 /* chapters.json を fetch で読み込み、章データの配列を返す */
 async function loadChapters() {
   const response = await fetch(CHAPTERS_JSON_PATH);
-  if (!response.ok) {
+  if (!response.ok) { // HTTPエラーが発生した場合は例外を投げる
     throw new Error(`chapters.json の読み込みに失敗しました: ${response.status} ${response.statusText}`);
   }
-  const chapters = await response.json();
+  const chapters = await response.json(); // JSON文字列をオブジェクトに変換する
   return chapters;
 }
 
@@ -80,8 +82,8 @@ function calcChapterProgress(chapter, status) {
 
   /* 節が0のとき（定義ミス防止）は0%を返す */
   if (totalSections === 0) return 0;
-
-  return Math.floor((checkedSections / totalSections) * 100);
+// 小数点以下切り捨てで整数にする
+  return Math.floor((checkedSections / totalSections) * 100); 
 }
 
 /**
@@ -92,14 +94,15 @@ function calcChapterProgress(chapter, status) {
  */
 function calcTotalProgress(chapters, status) {
   /* 全章の節数・チェック済み節数を合計する */
-  let totalSections   = 0;
-  let checkedSections = 0;
+  let totalSections   = 0; // 全節数の合計
+  let checkedSections = 0; // チェック済みの節数の合計
 
-  chapters.forEach(chapter => {
-    totalSections   += chapter.sections.length;
+  chapters.forEach(chapter => { // 章を1つずつ処理する
+    totalSections   += chapter.sections.length; // 節の数を足していく
     checkedSections += chapter.sections.filter(sec => status[sec.id]).length;
-  });
+  }); // チェック済みの節だけを抽出して数える 
 
+  // 節が0のとき（定義ミス防止）は0%を返す
   if (totalSections === 0) return 0;
 
   return Math.floor((checkedSections / totalSections) * 100);
@@ -121,16 +124,17 @@ function isAllSectionsDone(chapter, status) {
  * ※ 章のチェックボックスは統計に含めない（節の数のみカウントする）
  */
 function updateStats(chapters, status) {
-  let total = 0;
+  let total = 0; //カウント用の変数を初期化する
   let done  = 0;
 
-  chapters.forEach(chapter => {
-    chapter.sections.forEach(sec => {
+  // 二重ループで全章・全節を走査して、total と done を数える
+  chapters.forEach(chapter => { // 章を1つずつ処理する
+    chapter.sections.forEach(sec => { // 節を1つずつ処理する
       total++;
       if (status[sec.id]) done++;
     });
   });
-
+// HTMLに反映
   document.getElementById('stat-total').textContent     = total;
   document.getElementById('stat-done').textContent      = done;
   document.getElementById('stat-remaining').textContent = total - done;
@@ -138,18 +142,22 @@ function updateStats(chapters, status) {
 
 /* 全体の進捗バーを更新する */
 function updateProgressBar(chapters, status) {
-  const pct   = calcTotalProgress(chapters, status);
-  const fill  = document.getElementById('progress-fill');
+  const pct   = calcTotalProgress(chapters, status); //計算
+// HTMLの要素を取得して更新する
+  const fill  = document.getElementById('progress-fill'); 
   const label = document.getElementById('progress-label');
+  // 見た目を更新
   if (fill)  fill.style.width  = pct + '%';
   if (label) label.textContent = pct + '%';
 }
 
 /* 章ごとのミニ進捗バーを更新する */
 function updateChapterProgressBar(chapter, status) {
-  const pct   = calcChapterProgress(chapter, status);
+  const pct   = calcChapterProgress(chapter, status); // 計算
+  // 章ごとのミニ進捗バーの要素をIDから取得して更新する
   const fill  = document.getElementById('chapter-progress-fill-' + chapter.id);
   const label = document.getElementById('chapter-progress-pct-'  + chapter.id);
+  // 見た目を更新
   if (fill)  fill.style.width  = pct + '%';
   if (label) label.textContent = pct + '%';
 }
@@ -176,10 +184,10 @@ function updateAllDisplay(chapters, status, chapterElementMap) {
     const chEls = chapterElementMap.get(chapter.id);
     if (!chEls) return;
 
-    /* 章チェックボックスを節の状態に合わせて自動更新する */
+    /* 章チェックボックスを自動更新する */
     chEls.chkEl.checked = allDone;
 
-    /* 章カードの is-done クラスを切り替える（タイトルの取り消し線を制御） */
+    /* 見た目を更新 */
     chEls.card.classList.toggle('is-done', allDone);
   });
 }
@@ -191,10 +199,11 @@ function updateAllDisplay(chapters, status, chapterElementMap) {
 /**
  * 全体進捗バーの HTML 要素を生成して返す
  */
-function createProgressBarElement() {
-  const wrapper = document.createElement('div');
+function createProgressBarElement() { 
+  const wrapper = document.createElement('div'); // 外枠
   wrapper.className = 'progress-bar-wrapper';
-  wrapper.innerHTML = `
+  // 内部のHTMLをまとめてセットする（ラベルとバーの構造）
+  wrapper.innerHTML = ` 
     <div class="progress-bar-label">
       <span>学習進捗（全体）</span>
       <span id="progress-label">0%</span>
@@ -219,31 +228,33 @@ function createProgressBarElement() {
  */
 function createChapterCard(chapters, chapter, status, chapterElementMap) {
 
-  /* ── 章カードのルート要素 ── */
+  /* ── 章カードの外枠 ── */
   const card = document.createElement('div');
   card.className = 'chapter-card';
 
   /* ── 章ヘッダー（クリックで開閉する行） ── */
   const header = document.createElement('div');
   header.className = 'chapter-header';
-  header.setAttribute('aria-expanded', 'false');
+  header.setAttribute('aria-expanded', 'false'); // アクセシビリティのため、初期状態は「閉じている」とする
 
   /* 章のチェックボックス
      節が全部チェック済みのとき checked = true にする */
   const chapterCheckbox = document.createElement('input');
   chapterCheckbox.type      = 'checkbox';
   chapterCheckbox.className = 'chapter-checkbox';
+  // 章のチェック状態は「配下の節が全部チェック済みかどうか」で決まるので、初期状態を計算してセットする
   chapterCheckbox.checked   = isAllSectionsDone(chapter, status);
   chapterCheckbox.setAttribute('aria-label', chapter.title + ' 全節完了');
 
   /* 章のタイトルテキスト */
   const titleSpan = document.createElement('span');
   titleSpan.className   = 'chapter-title';
-  titleSpan.textContent = chapter.title;
+  titleSpan.textContent = chapter.title; // JSONのデータを表示する
 
   /* 章ごとのミニ進捗バー（節のチェック数で計算） */
   const progressWrap = document.createElement('div');
   progressWrap.className = 'chapter-progress-wrap';
+  //章ごとに違うバーを作るためにIDに章IDを付与する
   progressWrap.innerHTML = `
     <span class="chapter-progress-pct" id="chapter-progress-pct-${chapter.id}">0%</span>
     <div class="chapter-progress-track">
@@ -254,6 +265,7 @@ function createChapterCard(chapters, chapter, status, chapterElementMap) {
   /* 開閉の矢印アイコン */
   const arrow = document.createElement('span');
   arrow.className = 'chapter-arrow';
+  // 見た目用のSVGをセットする（下向きの矢印）
   arrow.innerHTML = `
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
          stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -268,10 +280,10 @@ function createChapterCard(chapters, chapter, status, chapterElementMap) {
   header.appendChild(arrow);
 
   /* ── 節リストのアコーディオンエリア ── */
-  const sectionWrapper = document.createElement('div');
+  const sectionWrapper = document.createElement('div'); // 開閉する部分の外枠
   sectionWrapper.className = 'section-list-wrapper';
 
-  const sectionList = document.createElement('ul');
+  const sectionList = document.createElement('ul'); // 節のリスト
   sectionList.className = 'section-list';
 
   /* 節ごとのDOM要素を記録するマップ（章チェック時の一括操作に使う） */
@@ -326,20 +338,22 @@ function createChapterCard(chapters, chapter, status, chapterElementMap) {
 
      節のチェック状態を変えた結果として進捗率も変わる。
      ───────────────────────────────────────────────────────── */
-  chapterCheckbox.addEventListener('change', () => {
-    const currentStatus = loadCheckStatus();
+     // 章チェックボックスの状態が変わったときの処理
+     chapterCheckbox.addEventListener('change', () => {
+    const currentStatus = loadCheckStatus(); // 最新のチェック状態を読み込む
 
-    /* 配下のすべての節を章チェックと同じ状態にする */
+    /* 章ON→全節ON、章OFF→全節OFF */
     chapter.sections.forEach(sec => {
       /* ① statusオブジェクトを更新する */
       currentStatus[sec.id] = chapterCheckbox.checked;
 
-      /* ② 節のチェックボックス要素のcheckedプロパティを更新する */
+      /* ② 節のHTMLを取得 */
       const secEls = sectionElementMap.get(sec.id);
       if (secEls) {
+        // 節のチェックボックスを更新する
         secEls.chkEl.checked = chapterCheckbox.checked;
 
-        /* ③ 節アイテムの is-done クラスを切り替える */
+        /* ③ みためを更新 */
         secEls.li.classList.toggle('is-done', chapterCheckbox.checked);
       }
     });
@@ -361,6 +375,7 @@ function createSectionItem(chapters, chapter, sec, index, status, chapterElement
 
   /* 節アイテムのルート要素 */
   const li = document.createElement('li');
+  // すでにチェック済みの節なら is-done クラスを付ける（初期表示）
   li.className = 'section-item' + (status[sec.id] ? ' is-done' : '');
 
   /* 節の番号バッジ（例: 1-1, 1-2） */
@@ -380,7 +395,7 @@ function createSectionItem(chapters, chapter, sec, index, status, chapterElement
   /* 節のテキスト */
   const textSpan = document.createElement('span');
   textSpan.className   = 'section-text';
-  textSpan.textContent = sec.text;
+  textSpan.textContent = sec.text; // JSONのデータを表示する
 
   li.appendChild(numSpan);
   li.appendChild(checkbox);
@@ -468,3 +483,15 @@ document.addEventListener('DOMContentLoaded', async () => {
   /* ⑧ ページ読み込み時点のチェック状態で統計・進捗バーを初期表示する */
   updateAllDisplay(chapters, status, chapterElementMap);
 });
+
+/**
+ * updateAllDisplay
+ ├─① updateStats（数字）
+ ├─② updateProgressBar（全体バー）
+ └─③ 各章ループ
+      ├─③-1 章進捗バー更新
+      ├─③-2 全節完了か判定
+      ├─③-3 MapからDOM取得
+      ├─③-4 章チェック更新
+      └─③-5 見た目更新
+ */
