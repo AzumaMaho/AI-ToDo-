@@ -21,7 +21,7 @@
   --transition: 0.2s ease;  /* アニメーション速度 */
 }
 
-/* ─── リセット ──────────────────────────────────────────── */
+/* ─── リセット ───────────────────────────────────────────── */
 *,
 *::before,
 *::after {
@@ -36,12 +36,12 @@ body {
   color: var(--text);
   font-family: 'Zen Kaku Gothic New', sans-serif;
   min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding: 60px 16px 80px;
-  position: relative;
-  overflow-x: hidden;
+  display: flex;  /* フレックスコンテナにして中央揃えにする */
+  flex-direction: column; /* 縦方向に並べる */
+  align-items: center;  /* 横方向の中央揃え */
+  padding: 60px 16px 80px;  /* 上下に余裕を持たせる */
+  position: relative; /* 背景のグロー装飾を配置するために相対位置 */
+  overflow-x: hidden; /* 横スクロールを防止 */
 }
 
 /* ─── 背景のグロー装飾 ───────────────────────────────────── */
@@ -52,44 +52,61 @@ body {
   z-index: 0;
   filter: blur(80px);
 }
+
+  /*右上の光*/
 .bg-glow--top {
-  width: 600px; height: 400px;
-  top: -100px; right: -100px;
-  background: radial-gradient(ellipse, rgba(200,245,66,.07) 0%, transparent 70%);
-}
-.bg-glow--bottom {
-  width: 400px; height: 600px;
-  bottom: -150px; left: -100px;
-  background: radial-gradient(ellipse, rgba(66,245,200,.05) 0%, transparent 70%);
+  width: 600px;
+  height: 400px;
+  top: -100px;
+  right: -100px;
+  background: radial-gradient(ellipse, rgba(200, 245, 66, 0.07) 0%, transparent 70%);
 }
 
-/* ─── コンテンツのコンテナ ───────────────────────────────── */
+  /*左下の光*/
+.bg-glow--bottom {
+  width: 400px;
+  height: 600px;
+  bottom: -150px;
+  left: -100px;
+  background: radial-gradient(ellipse, rgba(66, 245, 200, 0.05) 0%, transparent 70%);
+}
+
+/* ─── コンテナ ───────────────────────────────────────────── */
 .container {
-  position: relative;
+  position: relative; /* グロー装飾の上にコンテンツを配置するために相対位置 */
   z-index: 1;
   width: 100%;
-  max-width: 680px; 
+  max-width: 640px;
 }
 
 /* ─── ヘッダー ───────────────────────────────────────────── */
-.header { margin-bottom: 40px; }
+.header {
+  margin-bottom: 40px;
+}
 
+
+/* ヘッダー内の小さいラベル（例: "AIパスポート"） ─────────────── */
 .label {
   font-family: 'DM Mono', monospace;
   font-size: 11px;
   letter-spacing: 0.2em;
   color: var(--accent);
-  text-transform: uppercase;
+  text-transform: uppercase;  /* 全て大文字にする */
   margin-bottom: 8px;
 }
 
+/* ヘッダーのタイトル*/
 .title {
-  font-size: clamp(2rem, 6vw, 3rem);
+  font-size: clamp(2rem, 6vw, 3rem);  /* 画面幅に応じてサイズが変わる（最小2rem、最大3rem） */
   font-weight: 900;
   line-height: 1;
-  letter-spacing: -0.02em;
+  letter-spacing: -0.02em;  /* タイトルの文字を少し重ねる */
 }
-.title__accent { color: var(--accent); }
+
+/*タイトルのアクセント表示*/
+.title__accent {
+  color: var(--accent);
+}
 
 /* ─── 統計エリア ─────────────────────────────────────────── */
 .stats {
@@ -97,42 +114,63 @@ body {
   font-family: 'DM Mono', monospace;
   font-size: 12px;
   color: var(--muted);
-  display: flex;
-  gap: 20px;
-  flex-wrap: wrap;
+  display: flex; /* 横並びにする */
+  gap: 20px; /* 統計項目同士のスペース */
+  flex-wrap: wrap; /* 画面が狭いときは次の行に回す */
 }
-.stats__value           { font-weight: 500; color: var(--accent2); }
-.stats__value--done     { color: var(--accent); }
-.stats__value--remaining{ color: var(--accent2); }
 
-/* ─── 全体の進捗バー ─────────────────────────────────────── */
-.progress-bar-wrapper { margin-bottom: 28px; }
+.stats__value {
+  font-weight: 500;
+  color: var(--accent2);
+}
 
+.stats__value--done {
+  color: var(--accent);
+}
+
+.stats__value--remaining {
+  color: var(--accent2);
+}
+
+/* ─── 全体進捗バー ───────────────────────────────────────── */
+.progress-bar-wrapper {
+  margin-bottom: 28px;
+}
+
+/* 進捗バーのラベルエリア*/
 .progress-bar-label {
   font-family: 'DM Mono', monospace;
   font-size: 11px;
   color: var(--muted);
   margin-bottom: 8px;
   display: flex;
-  justify-content: space-between;
+  justify-content: space-between; /* ラベルと数値を両端に配置 */
 }
-.progress-bar-label span { color: var(--accent); }
 
-.progress-bar-track {
-  width: 100%; height: 4px;
-  background: var(--border);
-  border-radius: 2px;
-  overflow: hidden;
+/*強調文字*/
+.progress-bar-label span {
+  color: var(--accent);
 }
+
+/* 進捗バーの背景 */
+.progress-bar-track {
+  width: 100%;
+  height: 4px;
+  background: var(--border);
+  border-radius: 2px; /* 角を少し丸くする */
+  overflow: hidden; /* 塗り部分がはみ出さないようにする */
+}
+
+/* バーの塗り部分（JavaScriptで幅を変化させる） */
 .progress-bar-fill {
   height: 100%;
   background: linear-gradient(90deg, var(--accent2), var(--accent));
   border-radius: 2px;
   width: 0%;
-  transition: width 0.4s ease;
+  transition: width 0.4s ease; /* 幅が変わるときにアニメーションする */
 }
 
-/* ─── 章リストのコンテナ ─────────────────────────────────── */
+/* ─── 章リスト ───────────────────────────────────────────── */
 .chapter-list {
   display: flex;
   flex-direction: column;
@@ -145,156 +183,174 @@ body {
   border: 1px solid var(--border);
   border-radius: var(--radius);
   box-shadow: var(--shadow);
-  overflow: hidden;
+  overflow: hidden; /* アコーディオンアニメーションに必要 */
   animation: slideIn 0.25s cubic-bezier(0.34, 1.56, 0.64, 1) both;
-  transition: border-color var(--transition);
+  transition: border-color var(--transition); /* ホバー時の枠色変化 */
 }
-.chapter-card:hover { border-color: var(--muted); }
 
-/* ─── 章ヘッダー（クリックで開閉） ──────────────────────── */
+.chapter-card:hover {
+  border-color: var(--muted);
+}
+
+/* ─── 章ヘッダー（クリックで開閉する行） ────────────────── */
 .chapter-header {
   display: flex;
-  align-items: center;
+  align-items: center;  /* チェックボックスとタイトルを縦中央揃え */
   gap: 14px;
   padding: 18px 20px;
-  cursor: pointer;
-  user-select: none;
+  cursor: pointer;    /* クリック可能であることを示すカーソル */
+  user-select: none;  /* テキストが選択されないようにする */
   transition: background var(--transition);
 }
-.chapter-header:hover { background: rgba(255,255,255,.03); }
 
-/* 章のチェックボックス */
+.chapter-header:hover {
+  background: rgba(255, 255, 255, 0.03);
+}
+
+/* ─── 章のチェックボックス ───────────────────────────────── */
+/*
+  章のチェックボックスは「配下の節が全チェック済みか」を示す。
+  節のチェック状態から自動で連動するほか、
+  章チェックを押すと配下の節を一括でON/OFFできる。
+*/
 .chapter-checkbox {
-  appearance: none;
-  -webkit-appearance: none;
-  width: 20px; height: 20px;
-  border: 2px solid var(--border);
+  appearance: none; /* ブラウザのデフォルトスタイルを消す */
+  -webkit-appearance: none; /* Safari用 */
+  width: 20px;
+  height: 20px;
+  border: 2px solid var(--border); /* 枠線 */
   border-radius: 6px;
-  cursor: pointer;
-  flex-shrink: 0;
-  position: relative;
-  transition: border-color var(--transition), background var(--transition);
+  cursor: pointer; /* クリック可能なことを示す */
+  flex-shrink: 0; /* チェックボックスが縮まないようにする */
+  position: relative; /* チェックマークを配置するために相対位置にする */
+  /* transition: border-color var(--transition), background var(--transition); /* ホバーとチェック状態の変化をアニメーションする */
 }
-.chapter-checkbox:hover    { border-color: var(--accent); }
-.chapter-checkbox:checked  { background: var(--accent); border-color: var(--accent); }
-.chapter-checkbox:checked::after {
-  content: '';
-  position: absolute;
-  top: 3px; left: 6px;
-  width: 5px; height: 9px;
-  border: 2px solid #0e0e11;
-  border-top: none; border-left: none;
-  transform: rotate(45deg);
-}
-.chapter-checkbox:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 
-/* 章タイトル */
+.chapter-checkbox:hover {
+  border-color: var(--accent);
+}
+
+.chapter-checkbox:checked {
+  background: var(--accent);
+  border-color: var(--accent);
+}
+
+/* チェックマークのスタイル */
+.chapter-checkbox:checked::after {
+  content: ''; /* チェックマークの形を作る */
+  position: absolute; /* チェックマークを配置するために絶対位置にする */
+  top: 3px;
+  left: 6px;
+  width: 5px;
+  height: 9px;
+  border: 2px solid #0e0e11; /* チェックマークの色 */
+  border-top: none; /* チェックマークの上辺を消す */
+  border-left: none; /* チェックマークの左辺を消す */
+  transform: rotate(45deg); /* チェックマークを斜めにする */
+}
+
+.chapter-checkbox:focus-visible {
+  outline: 2px solid var(--accent); /* フォーカスリングの色 */
+  outline-offset: 2px; /* フォーカスリングとチェックボックスの間隔 */
+}
+
+/* ─── 章のタイトル ───────────────────────────────────────── */
 .chapter-title {
-  flex: 1;
+  flex: 1; /* タイトルが長いときに省略せず複数行にする */
   font-size: 15px;
   font-weight: 700;
   line-height: 1.4;
-  transition: color var(--transition);
+  transition: color var(--transition); /* 章が完了したときの色変化をアニメーションする */
 }
+
+/* 章が全節完了の見た目 */
 .chapter-card.is-done .chapter-title {
-  text-decoration: line-through;
+  text-decoration: line-through; /* 取り消し線 */
   color: var(--done-text);
 }
 
-/* ─── 章のミニ進捗バー ───────────────────────────────────── */
+/* ─── 章ごとのミニ進捗バー ───────────────────────────────── */
+/*
+  節のチェック数 ÷ 節の合計数 × 100% で算出する。
+  章チェックボックスは進捗計算に含めない。
+*/
 .chapter-progress-wrap {
   display: flex;
   align-items: center;
   gap: 8px;
-  flex-shrink: 0;
+  flex-shrink: 0; /*伸縮不可に*/
 }
+
+/* 進捗の数値（例：80%） */
 .chapter-progress-pct {
   font-family: 'DM Mono', monospace;
   font-size: 10px;
   color: var(--muted);
-  min-width: 28px;
+  min-width: 32px; /* 「100%」まで表示できる幅 */
   text-align: right;
 }
+
+/* 進捗バーの背景（空の状態） */
 .chapter-progress-track {
-  width: 60px; height: 3px;
+  width: 60px;
+  height: 3px;
   background: var(--border);
   border-radius: 2px;
   overflow: hidden;
 }
+
+/* 進捗バーの塗りつぶし */
 .chapter-progress-fill {
   height: 100%;
   background: linear-gradient(90deg, var(--accent2), var(--accent));
   border-radius: 2px;
-  width: 0%;
-  transition: width 0.4s ease;
+  width: 0%; /* JavaScriptで幅を変化させる */
+  transition: width 0.4s ease; /* 幅が変わるときにアニメーションする */
 }
-
-/* ─── テスト開始ボタン ───────────────────────────────────── */
-/* 章ヘッダー内の右端に配置するコンパクトなボタン */
-.btn-test-start {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  background: transparent;
-  border: 1px solid var(--border);
-  border-radius: 6px;
-  padding: 5px 10px;
-  font-family: 'Zen Kaku Gothic New', sans-serif;
-  font-size: 11px;
-  color: var(--muted);
-  cursor: pointer;
-  flex-shrink: 0;
-  transition: color var(--transition), border-color var(--transition), background var(--transition);
-  white-space: nowrap;
-}
-.btn-test-start:hover {
-  color: var(--accent);
-  border-color: var(--accent);
-  background: rgba(200,245,66,.07);
-}
-/* テスト合格済みのとき（章が完了状態）はボタンの色を変える */
-.chapter-card.is-done .btn-test-start {
-  color: var(--accent);
-  border-color: var(--accent);
-}
-
-/* テスト済みバッジ（合格済みに表示） */
-.test-badge {
-  font-family: 'DM Mono', monospace;
-  font-size: 10px;
-  color: var(--accent);
-  flex-shrink: 0;
-  display: none; /* JavaScriptで表示切替 */
-}
-.test-badge.is-visible { display: block; }
 
 /* ─── 開閉の矢印アイコン ─────────────────────────────────── */
 .chapter-arrow {
-  width: 18px; height: 18px;
-  flex-shrink: 0;
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0; /* 縮まないようにする */
   color: var(--muted);
-  transition: transform var(--transition);
+  transition: transform var(--transition);  /* 回転のアニメーション */
 }
-.chapter-card.is-open .chapter-arrow { transform: rotate(180deg); }
 
-/* ─── 節リストのアコーディオン ──────────────────────────── */
+/* 章が開いているとき矢印を180度回転（▼ → ▲） */
+.chapter-card.is-open .chapter-arrow {
+  transform: rotate(180deg);
+}
+
+/* ─── アコーディオン（節リストの開閉エリア） ────────────── */
+/*
+  max-height を 0 ↔ 大きな値で切り替えることでアニメーションさせる。
+  height: auto は transition できないため max-height を使う。
+*/
+
+/* 外枠（開閉制御） */
 .section-list-wrapper {
-  max-height: 0;
-  overflow: hidden;
-  transition: max-height 0.35s ease;
+  max-height: 0;  /* 初期は閉じている */
+  overflow: hidden; /* はみ出しを隠す */
+  transition: max-height 0.35s ease;  /* 開アニメーション */
 }
-.chapter-card.is-open .section-list-wrapper { max-height: 1000px; }
 
+/* is-open のときは節リストを展開する */
+.chapter-card.is-open .section-list-wrapper {
+  max-height: 1000px; /* 節が何個あっても収まる十分な高さ */
+}
+
+/* ─── 節リスト ───────────────────────────────────────────── */
 .section-list {
-  list-style: none;
-  border-top: 1px solid var(--border);
+  list-style: none; /* デフォルトのリストスタイルを消す */
+  border-top: 1px solid var(--border); /* 章ヘッダーとの区切り線 */
   padding: 12px 16px 16px;
   display: flex;
   flex-direction: column;
   gap: 8px;
 }
 
-/* ─── 節のアイテム ───────────────────────────────────────── */
+/* ─── 節アイテム ─────────────────────────────────────────── */
 .section-item {
   background: var(--surface2);
   border: 1px solid var(--border);
@@ -305,48 +361,77 @@ body {
   gap: 12px;
   transition: border-color var(--transition);
 }
-.section-item:hover { border-color: var(--muted); }
 
+.section-item:hover {
+  border-color: var(--muted);
+}
+
+/* ─── 節の番号バッジ（例: 1-1） ──────────────────────────── */
 .section-num {
   font-family: 'DM Mono', monospace;
   font-size: 10px;
   color: var(--muted);
-  flex-shrink: 0;
-  user-select: none;
+  flex-shrink: 0; /* 番号が縮まないようにする */
+  user-select: none;  /* 番号は選択不可 */
 }
 
-/* 節のチェックボックス */
+/* ─── 節のチェックボックス ───────────────────────────────── */
+/*
+  節チェックが「進捗率の計算基準」となる。
+  全節がチェックされると、章チェックも自動でONになる。
+*/
 .section-checkbox {
-  appearance: none;
-  -webkit-appearance: none;
-  width: 17px; height: 17px;
+  appearance: none; /* ブラウザのデフォルトスタイルを消す */
+  -webkit-appearance: none; /* Safari用 */
+  width: 17px;
+  height: 17px;
   border: 2px solid var(--border);
   border-radius: 5px;
-  cursor: pointer;
-  flex-shrink: 0;
-  position: relative;
-  transition: border-color var(--transition), background var(--transition);
+  cursor: pointer; /* クリック可能なことを示す */
+  flex-shrink: 0; /* チェックボックスが縮まないようにする */
+  position: relative; /* チェックマークを配置するために相対位置にする */
+  transition: border-color var(--transition), background var(--transition); /* ホバーとチェック状態の変化をアニメーションする */
 }
-.section-checkbox:hover   { border-color: var(--accent2); }
-.section-checkbox:checked { background: var(--accent2); border-color: var(--accent2); }
-.section-checkbox:checked::after {
-  content: '';
-  position: absolute;
-  top: 2px; left: 5px;
-  width: 4px; height: 7px;
-  border: 2px solid #0e0e11;
-  border-top: none; border-left: none;
-  transform: rotate(45deg);
-}
-.section-checkbox:focus-visible { outline: 2px solid var(--accent2); outline-offset: 2px; }
 
+.section-checkbox:hover {
+  border-color: var(--accent2); /* 節は水色系でホバー */
+}
+
+.section-checkbox:checked {
+  background: var(--accent2);
+  border-color: var(--accent2);
+}
+
+/* チェックマークのスタイル */
+.section-checkbox:checked::after {
+  content: ''; /* チェックマークの形を作る */
+  position: absolute; /* チェックマークを配置するために絶対位置にする */
+  top: 2px;
+  left: 4px;
+  width: 4px;
+  height: 7px;
+  border: 2px solid #0e0e11;
+  border-top: none;
+  border-left: none;
+  transform: rotate(45deg); /* チェックマークを斜めにする */
+}
+
+/* フォーカスリング */
+.section-checkbox:focus-visible {
+  outline: 2px solid var(--accent2);
+  outline-offset: 2px;
+}
+
+/* ─── 節のテキスト ───────────────────────────────────────── */
 .section-text {
-  flex: 1;
+  flex: 1; /* テキストが長いときに省略せず複数行にする */
   font-size: 13px;
   line-height: 1.4;
-  color: var(--text);
-  transition: color var(--transition);
+  word-break: break-all; /* 長いURLなどを途中で改行する */
+  transition: color var(--transition); /* 完了状態の色変化をアニメーションする */
 }
+
+/* 節が完了状態のとき見た目 */
 .section-item.is-done .section-text {
   text-decoration: line-through;
   color: var(--done-text);
@@ -354,271 +439,37 @@ body {
 
 /* ─── アニメーション ─────────────────────────────────────── */
 @keyframes slideIn {
-  from { opacity: 0; transform: translateY(12px) scale(0.98); }
-  to   { opacity: 1; transform: translateY(0) scale(1); }
+  from {
+    opacity: 0;
+    transform: translateY(12px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
 }
 
 /* ─── スクロールバー ─────────────────────────────────────── */
 ::-webkit-scrollbar { width: 4px; }
 ::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
-
-/* ============================================================
-   テストモーダル
-   ============================================================ */
-
-/* ── モーダルの背景オーバーレイ ── */
-.modal-overlay {
-  position: fixed;
-  inset: 0;                       /* 画面全体を覆う */
-  background: rgba(0, 0, 0, 0.7);
-  z-index: 100;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 16px;
-  opacity: 0;
-  visibility: hidden;             /* 初期状態は非表示 */
-  transition: opacity 0.25s ease, visibility 0.25s ease;
-}
-/* is-open クラスが付いたときに表示する */
-.modal-overlay.is-open {
-  opacity: 1;
-  visibility: visible;
-}
-
-/* ── モーダル本体 ── */
-.modal {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 14px;
-  width: 100%;
-  max-width: 580px;
-  max-height: 90vh;               /* 画面の90%以上は広がらない */
-  display: flex;
-  flex-direction: column;
-  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.7);
-  transform: translateY(16px);
-  transition: transform 0.25s ease;
-}
-.modal-overlay.is-open .modal { transform: translateY(0); }
-
-/* ── モーダルのヘッダー ── */
-.modal__header {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 20px 24px 16px;
-  border-bottom: 1px solid var(--border);
-  flex-shrink: 0;
-}
-.modal__label {
-  font-family: 'DM Mono', monospace;
-  font-size: 10px;
-  letter-spacing: 0.15em;
-  color: var(--accent);
-  text-transform: uppercase;
-}
-.modal__title {
-  flex: 1;
-  font-size: 16px;
-  font-weight: 700;
-  line-height: 1.3;
-}
-.modal__close {
-  background: transparent;
-  border: 1px solid var(--border);
-  border-radius: 6px;
-  width: 32px; height: 32px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  color: var(--muted);
-  flex-shrink: 0;
-  transition: color var(--transition), border-color var(--transition);
-}
-.modal__close:hover { color: var(--text); border-color: var(--muted); }
-
-/* ── モーダルの本文（スクロール可能エリア） ── */
-.modal__body {
-  padding: 20px 24px;
-  overflow-y: auto;               /* 問題が多い場合はスクロール */
-  flex: 1;
-}
-
-/* ─── 問題カード（1問分） ────────────────────────────────── */
-.question-card {
-  margin-bottom: 24px;
-  padding-bottom: 24px;
-  border-bottom: 1px solid var(--border);
-}
-.question-card:last-child {
-  margin-bottom: 0;
-  padding-bottom: 0;
-  border-bottom: none;
-}
-
-/* 問題番号 */
-.question-num {
-  font-family: 'DM Mono', monospace;
-  font-size: 10px;
-  color: var(--accent);
-  margin-bottom: 6px;
-}
-
-/* 問題文 */
-.question-text {
-  font-size: 14px;
-  line-height: 1.7;
-  margin-bottom: 14px;
-  color: var(--text);
-}
-
-/* 選択肢リスト */
-.choices {
-  list-style: none;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-/* 選択肢の1行（ラベル全体がクリック可能） */
-.choice-label {
-  display: flex;
-  align-items: flex-start;
-  gap: 10px;
-  padding: 10px 14px;
-  background: var(--surface2);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-  cursor: pointer;
-  transition: border-color var(--transition), background var(--transition);
-  font-size: 13px;
-  line-height: 1.5;
-}
-.choice-label:hover { border-color: var(--muted); }
-
-/* 選択後のスタイル */
-.choice-label.is-selected {
-  border-color: var(--accent2);
-  background: rgba(66, 245, 200, 0.07);
-}
-
-/* 採点後：正解の選択肢 */
-.choice-label.is-correct {
-  border-color: var(--accent);
-  background: rgba(200, 245, 66, 0.1);
-  color: var(--accent);
-}
-
-/* 採点後：不正解で選んだ選択肢 */
-.choice-label.is-wrong {
-  border-color: var(--red);
-  background: rgba(245, 66, 101, 0.08);
-  color: var(--red);
-}
-
-/* ラジオボタン本体 */
-.choice-radio {
-  appearance: none;
-  -webkit-appearance: none;
-  width: 16px; height: 16px;
-  border: 2px solid var(--border);
-  border-radius: 50%;           /* 丸型にする */
-  cursor: pointer;
-  flex-shrink: 0;
-  margin-top: 2px;
-  position: relative;
-  transition: border-color var(--transition), background var(--transition);
-}
-.choice-radio:checked { border-color: var(--accent2); }
-.choice-radio:checked::after {
-  content: '';
-  position: absolute;
-  top: 3px; left: 3px;
-  width: 6px; height: 6px;
-  background: var(--accent2);
-  border-radius: 50%;
-}
-
-/* ─── モーダルのフッター ─────────────────────────────────── */
-.modal__footer {
-  padding: 16px 24px 20px;
-  border-top: 1px solid var(--border);
-  flex-shrink: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-/* 回答するボタン */
-.btn-submit {
-  width: 100%;
-  background: var(--accent);
-  color: #0e0e11;
-  border: none;
-  border-radius: 8px;
-  padding: 12px;
-  font-family: 'Zen Kaku Gothic New', sans-serif;
-  font-size: 15px;
-  font-weight: 700;
-  cursor: pointer;
-  transition: transform 0.1s ease, box-shadow 0.2s ease;
-}
-.btn-submit:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 6px 20px rgba(200,245,66,.3);
-}
-.btn-submit:active { transform: translateY(0); box-shadow: none; }
-
-/* 結果表示エリア */
-.test-result {
-  background: var(--surface2);
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  padding: 14px 16px;
-  text-align: center;
-}
-.test-result__score {
-  font-family: 'DM Mono', monospace;
-  font-size: 22px;
-  font-weight: 500;
-  color: var(--accent);
-  margin-bottom: 4px;
-}
-.test-result__msg {
-  font-size: 13px;
-  color: var(--muted);
-  line-height: 1.6;
-}
-/* 合格メッセージは黄緑、不合格は赤 */
-.test-result__msg.is-pass { color: var(--accent); }
-.test-result__msg.is-fail { color: var(--red); }
-
-/* 閉じるボタン（採点後） */
-.btn-close-result {
-  width: 100%;
-  background: transparent;
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  padding: 10px;
-  font-family: 'Zen Kaku Gothic New', sans-serif;
-  font-size: 14px;
-  color: var(--muted);
-  cursor: pointer;
-  transition: color var(--transition), border-color var(--transition);
-}
-.btn-close-result:hover { color: var(--text); border-color: var(--muted); }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; } /* スクロールバーのスタイルをカスタマイズ（WebKitブラウザ用） */
 
 /* ─── レスポンシブ（スマートフォン向け） ────────────────── */
 @media (max-width: 480px) {
-  body { padding: 40px 12px 60px; }
-  .chapter-header { padding: 14px 16px; gap: 10px; }
-  .section-list { padding: 10px 12px 14px; }
+  body {
+    padding: 40px 12px 60px;
+  }
+
+  .chapter-header { /* 章ヘッダーのパディングを減らしてコンパクトにする */
+    padding: 14px 16px;
+  }
+
+  .section-list { /* 節リストのパディングを減らしてコンパクトにする */
+    padding: 10px 12px 14px;
+  }
+
   /* スマホでは章のミニ進捗バーを非表示にしてすっきりさせる */
-  .chapter-progress-wrap { display: none; }
-  .modal__header { padding: 16px 16px 12px; }
-  .modal__body   { padding: 16px; }
-  .modal__footer { padding: 12px 16px 16px; }
+  .chapter-progress-wrap {
+    display: none;
+  }
 }

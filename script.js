@@ -29,25 +29,12 @@ const CHAPTERS_JSON_PATH = 'chapters.json';
 /** ローカルストレージへの保存キー */
 const STORAGE_KEY = 'ai-passport-tasks';
 
-/* ============================================================
-   ローカルストレージ（チェック状態の保存・読み込み）
+function showError(msg) {
+  alert(msg);
+}
 
-   保存形式（節のチェック状態のみを保存する）:
-     { "ch1-s1": true, "ch1-s2": false, "ch2-s1": true, ... }
-
-   ※ 章のチェックボックスは「節が全部ONかどうか」を表示するだけなので
-      ローカルストレージには保存しない。
-      ページ再読み込み時に節の状態から自動計算して復元する。
-   ============================================================ */
-   function showError(msg) {
-    alert(msg);
-   }
-
-/**
- * 節のチェック状態をローカルストレージから読み込む
- * @returns {Object} チェック状態のオブジェクト
- */
-function loadCheckStatus() { // 読み込み
+/* 節のチェック状態をローカルストレージから読み込む */
+function loadCheckStatus() {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     // 文字列をオブジェクトに変換して返す
@@ -58,11 +45,8 @@ function loadCheckStatus() { // 読み込み
   }
 }
 
-/**
- * 節のチェック状態をローカルストレージに保存する
- * @param {Object} status - 節IDをキー、チェック済みかどうかを値とするオブジェクト
- */
-function saveCheckStatus(status) { // 保存
+/* 節のチェック状態をローカルストレージに保存する */
+function saveCheckStatus(status) {
   try {
     // オブジェクトを文字列に変換して保存する
     localStorage.setItem(STORAGE_KEY, JSON.stringify(status));
@@ -71,19 +55,8 @@ function saveCheckStatus(status) { // 保存
   }
 }
 
-/* ============================================================
-   chapters.json の読み込み
-
-   fetch API を使って JSON ファイルを非同期で取得する。
-   ローカルファイルで動作させる場合は HTTPサーバー経由で開くこと
-   （例: VS Code の Live Server, python -m http.server など）。
-   ============================================================ */
-
-/**
- * chapters.json を fetch で読み込み、章データの配列を返す
- * @returns {Promise<Array>} 章データの配列
- */
-async function loadChapters() { // chapters.json を読み込む
+/* chapters.json を fetch で読み込み、章データの配列を返す */
+async function loadChapters() {
   const response = await fetch(CHAPTERS_JSON_PATH);
   if (!response.ok) { // HTTPエラーが発生した場合は例外を投げる
     throw new Error(`chapters.json の読み込みに失敗しました: ${response.status} ${response.statusText}`);
@@ -91,12 +64,6 @@ async function loadChapters() { // chapters.json を読み込む
   const chapters = await response.json(); // JSON文字列をオブジェクトに変換する
   return chapters;
 }
-
-/* ============================================================
-   進捗計算
-   ※ 進捗率は「節のチェック数」のみで計算する。
-      章のチェックボックスは進捗計算に含めない。
-   ============================================================ */
 
 /**
  * 1章分の進捗率（0〜100%）を計算する
@@ -106,9 +73,6 @@ async function loadChapters() { // chapters.json を読み込む
  *
  * 例: 節が4つあり2つチェック済み → 2 ÷ 4 × 100 = 50%
  *
- * @param {Object} chapter - 章データ
- * @param {Object} status  - 節のチェック状態オブジェクト
- * @returns {number} 0〜100 の進捗率（整数）
  */
 function calcChapterProgress(chapter, status) {
   const totalSections   = chapter.sections.length;   /* 節の合計数 */
@@ -127,10 +91,6 @@ function calcChapterProgress(chapter, status) {
  *
  * 計算式:
  *   全節のうちチェック済みの節数 ÷ 全節数 × 100
- *
- * @param {Array}  chapters - 章データの配列（JSONから読み込んだもの）
- * @param {Object} status   - 節のチェック状態オブジェクト
- * @returns {number} 0〜100 の進捗率（整数）
  */
 function calcTotalProgress(chapters, status) {
   /* 全章の節数・チェック済み節数を合計する */
@@ -148,13 +108,9 @@ function calcTotalProgress(chapters, status) {
   return Math.floor((checkedSections / totalSections) * 100);
 }
 
-/**
+/** 
  * ある章の配下の節がすべてチェック済みかどうかを返す
  * 章チェックボックスのON/OFF状態の判定に使う
- *
- * @param {Object} chapter - 章データ
- * @param {Object} status  - 節のチェック状態オブジェクト
- * @returns {boolean}
  */
 function isAllSectionsDone(chapter, status) {
   /* 節が1つもない場合は false とする */
@@ -163,16 +119,9 @@ function isAllSectionsDone(chapter, status) {
   return chapter.sections.every(sec => status[sec.id]);
 }
 
-/* ============================================================
-   画面の更新（統計・進捗バー・章ミニバー・章チェックボックス）
-   ============================================================ */
-
 /**
  * ヘッダーの統計（全節数・完了・残り）を更新する
  * ※ 章のチェックボックスは統計に含めない（節の数のみカウントする）
- *
- * @param {Array}  chapters - 章データの配列
- * @param {Object} status   - 節のチェック状態オブジェクト
  */
 function updateStats(chapters, status) {
   let total = 0; //カウント用の変数を初期化する
@@ -191,11 +140,7 @@ function updateStats(chapters, status) {
   document.getElementById('stat-remaining').textContent = total - done;
 }
 
-/**
- * 全体の進捗バーを更新する
- * @param {Array}  chapters - 章データの配列
- * @param {Object} status   - 節のチェック状態オブジェクト
- */
+/* 全体の進捗バーを更新する */
 function updateProgressBar(chapters, status) {
   const pct   = calcTotalProgress(chapters, status); //計算
 // HTMLの要素を取得して更新する
@@ -206,11 +151,7 @@ function updateProgressBar(chapters, status) {
   if (label) label.textContent = pct + '%';
 }
 
-/**
- * 章ごとのミニ進捗バーを更新する
- * @param {Object} chapter - 章データ
- * @param {Object} status  - 節のチェック状態オブジェクト
- */
+/* 章ごとのミニ進捗バーを更新する */
 function updateChapterProgressBar(chapter, status) {
   const pct   = calcChapterProgress(chapter, status); // 計算
   // 章ごとのミニ進捗バーの要素をIDから取得して更新する
@@ -224,13 +165,9 @@ function updateChapterProgressBar(chapter, status) {
 /**
  * すべての進捗・統計・章チェックボックスをまとめて更新する
  * チェックボックスが変化するたびにこの関数を呼ぶ
- *
- * @param {Array}  chapters        - 章データの配列
- * @param {Object} status          - 節のチェック状態オブジェクト
- * @param {Map}    chapterElementMap - 章IDとDOM要素の対応マップ
  */
 function updateAllDisplay(chapters, status, chapterElementMap) {
-  /* 統計（個数）を更新 */
+  /* 統計（合計・完了・残り）を更新 */
   updateStats(chapters, status);
 
   /* 全体進捗バーを更新 */
@@ -261,7 +198,6 @@ function updateAllDisplay(chapters, status, chapterElementMap) {
 
 /**
  * 全体進捗バーの HTML 要素を生成して返す
- * @returns {HTMLElement}
  */
 function createProgressBarElement() { 
   const wrapper = document.createElement('div'); // 外枠
@@ -289,12 +225,6 @@ function createProgressBarElement() {
  *     .section-list-wrapper  ← アコーディオン部分
  *       ul.section-list
  *         li.section-item × 節の数
- *
- * @param {Array}  chapters        - 章データの配列（updateAllDisplay に渡すため）
- * @param {Object} chapter         - この章のデータ
- * @param {Object} status          - 節のチェック状態オブジェクト
- * @param {Map}    chapterElementMap - 章IDとDOM要素の対応マップ（更新用）
- * @returns {HTMLElement}
  */
 function createChapterCard(chapters, chapter, status, chapterElementMap) {
 
@@ -440,14 +370,6 @@ function createChapterCard(chapters, chapter, status, chapterElementMap) {
 
 /**
  * 節アイテム 1件分の HTML 要素を生成して返す
- *
- * @param {Array}  chapters        - 章データの配列（updateAllDisplay に渡すため）
- * @param {Object} chapter         - 親の章データ
- * @param {Object} sec             - 節データ { id, text }
- * @param {number} index           - 節のインデックス（番号表示に使用）
- * @param {Object} status          - 節のチェック状態オブジェクト
- * @param {Map}    chapterElementMap - 章IDとDOM要素の対応マップ
- * @returns {{ li: HTMLElement, checkbox: HTMLInputElement }}
  */
 function createSectionItem(chapters, chapter, sec, index, status, chapterElementMap) {
 
